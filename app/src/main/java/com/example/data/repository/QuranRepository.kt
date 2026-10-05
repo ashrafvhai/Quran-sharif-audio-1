@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 
+import kotlinx.coroutines.withContext
+
 class QuranRepository(private val quranDao: QuranDao) {
 
     val allFavorites: Flow<List<FavoriteEntity>> = quranDao.getAllFavorites().flowOn(Dispatchers.IO)
@@ -27,43 +29,53 @@ class QuranRepository(private val quranDao: QuranDao) {
         return quranDao.isFavorite(surahNumber, reciterId).flowOn(Dispatchers.IO)
     }
 
-    suspend fun toggleFavorite(surahNumber: Int, reciterId: String, currentIsFav: Boolean) {
-        if (currentIsFav) {
-            quranDao.deleteFavorite(surahNumber, reciterId)
-        } else {
-            quranDao.insertFavorite(FavoriteEntity(surahNumber, reciterId))
-        }
+    suspend fun toggleFavorite(surahNumber: Int, reciterId: String, currentIsFav: Boolean) = withContext(Dispatchers.IO) {
+        try {
+            if (currentIsFav) {
+                quranDao.deleteFavorite(surahNumber, reciterId)
+            } else {
+                quranDao.insertFavorite(FavoriteEntity(surahNumber, reciterId))
+            }
+        } catch (_: Exception) {}
     }
 
-    suspend fun recordHistory(surahNumber: Int, reciterId: String, positionMs: Long, durationMs: Long) {
-        quranDao.insertRecentHistory(
-            RecentHistoryEntity(
-                surahNumber = surahNumber,
-                reciterId = reciterId,
-                positionMs = positionMs,
-                durationMs = durationMs
+    suspend fun recordHistory(surahNumber: Int, reciterId: String, positionMs: Long, durationMs: Long) = withContext(Dispatchers.IO) {
+        try {
+            quranDao.insertRecentHistory(
+                RecentHistoryEntity(
+                    surahNumber = surahNumber,
+                    reciterId = reciterId,
+                    positionMs = positionMs,
+                    durationMs = durationMs
+                )
             )
-        )
+        } catch (_: Exception) {}
     }
 
     fun startDownloadSimulation(scope: CoroutineScope, surahNumber: Int, reciterId: String) {
         scope.launch(Dispatchers.IO) {
-            // Save initial downloading state
-            quranDao.setDownload(DownloadEntity(surahNumber, reciterId, isDownloaded = false, progress = 0.2f))
-            delay(600)
-            quranDao.setDownload(DownloadEntity(surahNumber, reciterId, isDownloaded = false, progress = 0.65f))
-            delay(600)
-            quranDao.setDownload(DownloadEntity(surahNumber, reciterId, isDownloaded = true, progress = 1f))
+            try {
+                // Save initial downloading state
+                quranDao.setDownload(DownloadEntity(surahNumber, reciterId, isDownloaded = false, progress = 0.2f))
+                delay(600)
+                quranDao.setDownload(DownloadEntity(surahNumber, reciterId, isDownloaded = false, progress = 0.65f))
+                delay(600)
+                quranDao.setDownload(DownloadEntity(surahNumber, reciterId, isDownloaded = true, progress = 1f))
+            } catch (_: Exception) {}
         }
     }
 
-    suspend fun removeDownload(surahNumber: Int, reciterId: String) {
-        quranDao.deleteDownload(surahNumber, reciterId)
+    suspend fun removeDownload(surahNumber: Int, reciterId: String) = withContext(Dispatchers.IO) {
+        try {
+            quranDao.deleteDownload(surahNumber, reciterId)
+        } catch (_: Exception) {}
     }
 
-    suspend fun createPlaylist(title: String, description: String = "") {
-        val id = "pl_" + System.currentTimeMillis()
-        quranDao.insertPlaylist(PlaylistEntity(id = id, title = title, description = description))
+    suspend fun createPlaylist(title: String, description: String = "") = withContext(Dispatchers.IO) {
+        try {
+            val id = "pl_" + System.currentTimeMillis()
+            quranDao.insertPlaylist(PlaylistEntity(id = id, title = title, description = description))
+        } catch (_: Exception) {}
     }
 
     fun getSurah(number: Int): Surah {

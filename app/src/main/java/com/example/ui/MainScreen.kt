@@ -98,13 +98,17 @@ fun MainScreen() {
 
     // Helper functions
     val playTrack = { surah: Surah, reciter: Reciter, ambient: AmbientSound? ->
-        if (ambient != null && ambient.id != playerState.ambientSound.id) {
-            playerManager.setAmbientSound(ambient)
-        }
-        playerManager.playSurah(surah, reciter, startPlaying = true)
-        coroutineScope.launch {
-            repository.recordHistory(surah.number, reciter.id, 0L, 0L)
-        }
+        try {
+            if (ambient != null && ambient.id != playerState.ambientSound.id) {
+                playerManager.setAmbientSound(ambient)
+            }
+            playerManager.playSurah(surah, reciter, startPlaying = true)
+            coroutineScope.launch {
+                try {
+                    repository.recordHistory(surah.number, reciter.id, 0L, 0L)
+                } catch (_: Exception) {}
+            }
+        } catch (_: Exception) {}
     }
 
     val handleDownloadClick = { surah: Surah ->

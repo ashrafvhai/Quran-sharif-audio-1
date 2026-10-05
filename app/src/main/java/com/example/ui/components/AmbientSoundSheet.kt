@@ -174,8 +174,8 @@ fun AmbientSoundSheet(
                         }
 
                         Slider(
-                            value = ambientVolume,
-                            onValueChange = onVolumeChange,
+                            value = ambientVolume.coerceIn(0f, 1f),
+                            onValueChange = { onVolumeChange(it.coerceIn(0f, 1f)) },
                             valueRange = 0f..1f,
                             colors = SliderDefaults.colors(
                                 thumbColor = GoldPrimary,

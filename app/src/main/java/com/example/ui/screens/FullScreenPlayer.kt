@@ -122,10 +122,11 @@ fun FullScreenPlayer(
     var isDraggingSlider by remember { mutableStateOf(false) }
     var dragSliderPosition by remember { mutableFloatStateOf(0f) }
 
+    val maxDuration = state.durationMs.toFloat().coerceAtLeast(1f)
     val currentSliderValue = if (isDraggingSlider) {
-        dragSliderPosition
+        dragSliderPosition.coerceIn(0f, maxDuration)
     } else {
-        if (state.durationMs > 0) state.currentPositionMs.toFloat() else 0f
+        state.currentPositionMs.toFloat().coerceIn(0f, maxDuration)
     }
 
     Box(
@@ -379,16 +380,16 @@ fun FullScreenPlayer(
             // SEEK BAR & TIMESTAMPS
             Column(modifier = Modifier.fillMaxWidth()) {
                 Slider(
-                    value = currentSliderValue,
+                    value = currentSliderValue.coerceIn(0f, maxDuration),
                     onValueChange = {
                         isDraggingSlider = true
-                        dragSliderPosition = it
+                        dragSliderPosition = it.coerceIn(0f, maxDuration)
                     },
                     onValueChangeFinished = {
                         isDraggingSlider = false
                         onSeekTo(dragSliderPosition.toLong())
                     },
-                    valueRange = 0f..state.durationMs.toFloat().coerceAtLeast(1f),
+                    valueRange = 0f..maxDuration,
                     colors = SliderDefaults.colors(
                         thumbColor = GoldPrimary,
                         activeTrackColor = GoldPrimary,
