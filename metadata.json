@@ -1,0 +1,6 @@
+{
+  "name": "Easy Quranify",
+  "description": "Listen to Holy Quran recitations with calming ambient backgrounds, rich reciter profiles, and immersive audio.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
