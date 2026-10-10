@@ -58,15 +58,8 @@ fun MiniPlayer(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(18.dp))
-            .background(
-                Brush.horizontalGradient(
-                    listOf(
-                        Color(0xF0181A24),
-                        Color(0xF0202330)
-                    )
-                )
-            )
-            .border(1.dp, SurfaceCardBorder, RoundedCornerShape(18.dp))
+            .background(Color(0x40161616))
+            .border(1.2.dp, Color(0x33FFFFFF), RoundedCornerShape(18.dp))
             .clickable { onExpand() }
             .testTag("mini_player")
     ) {

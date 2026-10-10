@@ -228,8 +228,8 @@ fun AmbientSoundSheet(
                                 Modifier.background(
                                     Brush.horizontalGradient(
                                         listOf(
-                                            GoldPrimary.copy(alpha = 0.25f),
-                                            Color(0xFF262015)
+                                            Color(0x33FFFFFF),
+                                            Color(0x1AFFFFFF)
                                         )
                                     )
                                 )
@@ -239,7 +239,7 @@ fun AmbientSoundSheet(
                         )
                         .border(
                             if (isAutoMixSelected) 2.dp else 1.dp,
-                            if (isAutoMixSelected) GoldPrimary else SurfaceCardBorder,
+                            if (isAutoMixSelected) Color.White else SurfaceCardBorder,
                             RoundedCornerShape(16.dp)
                         )
                         .clickable { onVideoThemeSelected(autoMixTheme.id) }
@@ -255,13 +255,13 @@ fun AmbientSoundSheet(
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(CircleShape)
-                                .background(if (isAutoMixSelected) GoldPrimary else Color(0x22FFFFFF)),
+                                .background(if (isAutoMixSelected) Color.White else Color(0x22FFFFFF)),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.AutoAwesome,
                                 contentDescription = "Auto Mix",
-                                tint = if (isAutoMixSelected) Color(0xFF090A0E) else GoldPrimary,
+                                tint = if (isAutoMixSelected) Color.Black else Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
@@ -272,19 +272,19 @@ fun AmbientSoundSheet(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = autoMixTheme.banglaName, // মিক্সিং বাগ্রাউণ্ড
-                                    color = if (isAutoMixSelected) GoldPrimary else TextPrimary,
+                                    text = autoMixTheme.banglaName, // মিক্সিং বাগ্রাউণ্ড (১০ সে.)
+                                    color = Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "• Auto Shuffle",
+                                    text = "• Auto 10s",
                                     color = TextMuted,
                                     fontSize = 12.sp
                                 )
                             }
                             Text(
-                                text = "একটার পর একটা শান্তিময় ভিডিও স্বয়ংক্রিয়ভাবে প্লে হবে",
+                                text = "২০টি শান্তিময় দৃশ্য প্রতি ১০ সেকেন্ডে স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে",
                                 color = TextMuted,
                                 fontSize = 12.sp
                             )
@@ -294,12 +294,12 @@ fun AmbientSoundSheet(
                             Box(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(GoldPrimary)
+                                    .background(Color.White)
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
                                     text = "ACTIVE",
-                                    color = Color(0xFF090A0E),
+                                    color = Color.Black,
                                     fontSize = 10.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -310,7 +310,7 @@ fun AmbientSoundSheet(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Grid of single video themes
+                // Grid of 20 video themes
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     contentPadding = PaddingValues(bottom = 24.dp),
@@ -318,7 +318,7 @@ fun AmbientSoundSheet(
                     verticalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(260.dp)
+                        .height(340.dp)
                 ) {
                     items(BackgroundVideoData.themes.filter { it.id != "auto_mix" }, key = { it.id }) { vTheme ->
                         val isSelected = vTheme.id == selectedVideoThemeId
@@ -331,8 +331,8 @@ fun AmbientSoundSheet(
                                         Modifier.background(
                                             Brush.verticalGradient(
                                                 listOf(
-                                                    GoldPrimary.copy(alpha = 0.25f),
-                                                    Color(0xFF262015)
+                                                    Color(0x33FFFFFF),
+                                                    Color(0x1AFFFFFF)
                                                 )
                                             )
                                         )
@@ -342,7 +342,7 @@ fun AmbientSoundSheet(
                                 )
                                 .border(
                                     if (isSelected) 1.8.dp else 1.dp,
-                                    if (isSelected) GoldPrimary else SurfaceCardBorder,
+                                    if (isSelected) Color.White else SurfaceCardBorder,
                                     RoundedCornerShape(14.dp)
                                 )
                                 .clickable { onVideoThemeSelected(vTheme.id) }

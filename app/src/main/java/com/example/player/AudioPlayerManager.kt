@@ -6,7 +6,9 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
+import android.net.Uri
 import android.util.Log
+import com.example.R
 import com.example.data.model.AmbientSound
 import com.example.data.model.AmbientSoundData
 import com.example.data.model.QuranData
@@ -68,6 +70,22 @@ class AudioPlayerManager(
     private var sleepTimerJob: Job? = null
     private var usingFallback = false
 
+    fun unmuteAndMaximizeVolume() {
+        _uiState.update { it.copy(isMuted = false, recitationVolume = 1.0f) }
+        try {
+            audioManager?.let { am ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
+                }
+                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, maxVol, AudioManager.FLAG_SHOW_UI)
+            }
+        } catch (_: Exception) {}
+        try {
+            recitationPlayer?.setVolume(1.0f, 1.0f)
+        } catch (_: Exception) {}
+    }
+
     fun playSurah(surah: Surah, reciter: Reciter, startPlaying: Boolean = true) {
         usingFallback = false
         _uiState.update {
@@ -77,10 +95,12 @@ class AudioPlayerManager(
                 isBuffering = true,
                 errorMessage = null,
                 currentPositionMs = 0L,
-                durationMs = 1000L
+                durationMs = 1000L,
+                isMuted = false,
+                recitationVolume = 1.0f
             )
         }
-
+        unmuteAndMaximizeVolume()
         prepareRecitation(surah, reciter, useFallback = false, autoPlay = startPlaying)
     }
 
@@ -97,12 +117,12 @@ class AudioPlayerManager(
     private fun requestSystemAudioFocus() {
         try {
             audioManager?.let { am ->
-                // Ensure media stream has healthy audible volume
-                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
-                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                if (currentVol < (maxVol * 0.5f) && maxVol > 0) {
-                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.85f).toInt(), 0)
+                // Ensure media stream is unmuted and at max audible volume
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 }
+                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, maxVol, AudioManager.FLAG_SHOW_UI)
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val playbackAttributes = AudioAttributes.Builder()
@@ -181,14 +201,26 @@ class AudioPlayerManager(
                     // Set MUSIC audio attributes so sound routes through media speaker clearly
                     setAudioAttributes(
                         AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .setLegacyStreamType(AudioManager.STREAM_MUSIC)
                             .build()
                     )
-                    setDataSource(url)
+                    @Suppress("DEPRECATION")
+                    setAudioStreamType(AudioManager.STREAM_MUSIC)
 
-                    // Ensure high volume initially
+                    if (surah.number == 1 && useFallback) {
+                        try {
+                            val rawUri = Uri.parse("android.resource://${context.packageName}/${R.raw.audio_fatihah}")
+                            setDataSource(context, rawUri)
+                        } catch (_: Exception) {
+                            setDataSource(url)
+                        }
+                    } else {
+                        setDataSource(url)
+                    }
+
+                    // Ensure max volume initially
                     setVolume(1.0f, 1.0f)
 
                     setOnPreparedListener { mp ->
@@ -208,7 +240,8 @@ class AudioPlayerManager(
                                 try {
                                     requestSystemAudioFocus()
                                     mp.start()
-                                    _uiState.update { it.copy(isPlaying = true) }
+                                    mp.setVolume(1.0f, 1.0f)
+                                    _uiState.update { it.copy(isPlaying = true, isMuted = false, recitationVolume = 1.0f) }
                                     startProgressTracking()
                                     ensureAmbientPlaying()
                                 } catch (e: Exception) {
@@ -291,10 +324,12 @@ class AudioPlayerManager(
                 pauseAmbient()
             } else {
                 try {
+                    unmuteAndMaximizeVolume()
                     requestSystemAudioFocus()
                     applyRecitationVolume()
                     player.start()
-                    _uiState.update { it.copy(isPlaying = true) }
+                    player.setVolume(1.0f, 1.0f)
+                    _uiState.update { it.copy(isPlaying = true, isMuted = false, recitationVolume = 1.0f) }
                     startProgressTracking()
                     ensureAmbientPlaying()
                 } catch (e: Exception) {

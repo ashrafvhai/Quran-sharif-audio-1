@@ -36,7 +36,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.viewinterop.AndroidView
-import coil.compose.AsyncImage
 import com.example.R
 import com.example.data.model.AmbientSound
 import kotlinx.coroutines.delay
@@ -50,23 +49,41 @@ data class BackgroundVideoTheme(
 )
 
 object BackgroundVideoData {
+    val allVideoResIds: List<Int> = listOf(
+        R.raw.video_waves,
+        R.raw.video_rain,
+        R.raw.video_sky,
+        R.raw.video_stars,
+        R.raw.video_sunset,
+        R.raw.video_aurora,
+        R.raw.video_forest,
+        R.raw.video_moon,
+        R.raw.video_river,
+        R.raw.video_galaxy,
+        R.raw.video_desert,
+        R.raw.video_lake,
+        R.raw.video_waterfall,
+        R.raw.video_dawn,
+        R.raw.video_twilight,
+        R.raw.video_sakura,
+        R.raw.video_breeze,
+        R.raw.video_clouds_timelapse,
+        R.raw.video_crystal_waters,
+        R.raw.video_candle
+    )
+
     val themes: List<BackgroundVideoTheme> = listOf(
         BackgroundVideoTheme(
             id = "auto_mix",
-            name = "Auto Mix Videos",
-            banglaName = "মিক্সিং বাগ্রাউণ্ড",
+            name = "Auto Mix (10s Cycle)",
+            banglaName = "মিক্সিং বাগ্রাউণ্ড (১০ সে.)",
             emoji = "🔀",
-            rawResIds = listOf(
-                R.raw.video_waves,
-                R.raw.video_rain,
-                R.raw.video_sky,
-                R.raw.video_stars
-            )
+            rawResIds = allVideoResIds
         ),
         BackgroundVideoTheme(
-            id = "sea",
+            id = "waves",
             name = "Ocean Waves",
-            banglaName = "সমুদ্র ও ঢেউ",
+            banglaName = "সমুদ্রের শান্ত ঢেউ",
             emoji = "🌊",
             rawResIds = listOf(R.raw.video_waves)
         ),
@@ -80,16 +97,128 @@ object BackgroundVideoData {
         BackgroundVideoTheme(
             id = "sky",
             name = "Clouds & Sky",
-            banglaName = "মেঘ ও নীল আকাশ",
+            banglaName = "নীল আকাশ ও মেঘ",
             emoji = "☁️",
             rawResIds = listOf(R.raw.video_sky)
         ),
         BackgroundVideoTheme(
             id = "stars",
             name = "Night Sky & Stars",
-            banglaName = "তারা ও শান্ত রাত",
+            banglaName = "তারাময় শান্ত রাত",
             emoji = "✨",
             rawResIds = listOf(R.raw.video_stars)
+        ),
+        BackgroundVideoTheme(
+            id = "sunset",
+            name = "Golden Sunset",
+            banglaName = "সূর্যাস্তের শান্তিময় আভা",
+            emoji = "🌅",
+            rawResIds = listOf(R.raw.video_sunset)
+        ),
+        BackgroundVideoTheme(
+            id = "aurora",
+            name = "Cosmic Aurora",
+            banglaName = "অরোরার মোহনীয় আলো",
+            emoji = "🌌",
+            rawResIds = listOf(R.raw.video_aurora)
+        ),
+        BackgroundVideoTheme(
+            id = "forest",
+            name = "Emerald Forest",
+            banglaName = "সবুজ স্নিগ্ধ অরণ্য",
+            emoji = "🌲",
+            rawResIds = listOf(R.raw.video_forest)
+        ),
+        BackgroundVideoTheme(
+            id = "moon",
+            name = "Crescent Moon",
+            banglaName = "চাঁদের স্নিগ্ধ আলো",
+            emoji = "🌙",
+            rawResIds = listOf(R.raw.video_moon)
+        ),
+        BackgroundVideoTheme(
+            id = "river",
+            name = "Mountain River",
+            banglaName = "পাহাড়ি শান্ত নদী",
+            emoji = "🏞️",
+            rawResIds = listOf(R.raw.video_river)
+        ),
+        BackgroundVideoTheme(
+            id = "galaxy",
+            name = "Deep Galaxy",
+            banglaName = "মহাজাগতিক গ্যালাক্সি",
+            emoji = "🪐",
+            rawResIds = listOf(R.raw.video_galaxy)
+        ),
+        BackgroundVideoTheme(
+            id = "desert",
+            name = "Desert Dunes",
+            banglaName = "মরুভূমির শান্ত বেলা",
+            emoji = "🏜️",
+            rawResIds = listOf(R.raw.video_desert)
+        ),
+        BackgroundVideoTheme(
+            id = "lake",
+            name = "Alpine Lake",
+            banglaName = "পাহাড়ের শান্ত হ্রদ",
+            emoji = "⛵",
+            rawResIds = listOf(R.raw.video_lake)
+        ),
+        BackgroundVideoTheme(
+            id = "waterfall",
+            name = "Misty Waterfall",
+            banglaName = "ঝরনার শীতল জলধারা",
+            emoji = "💧",
+            rawResIds = listOf(R.raw.video_waterfall)
+        ),
+        BackgroundVideoTheme(
+            id = "dawn",
+            name = "Serene Dawn",
+            banglaName = "ভোরের স্নিগ্ধ আলো",
+            emoji = "🌄",
+            rawResIds = listOf(R.raw.video_dawn)
+        ),
+        BackgroundVideoTheme(
+            id = "twilight",
+            name = "Peaceful Twilight",
+            banglaName = "গোধূলির শান্ত আকাশ",
+            emoji = "🌆",
+            rawResIds = listOf(R.raw.video_twilight)
+        ),
+        BackgroundVideoTheme(
+            id = "sakura",
+            name = "Blossom Petals",
+            banglaName = "ঝরে পড়া ফুলের পাপড়ি",
+            emoji = "🌸",
+            rawResIds = listOf(R.raw.video_sakura)
+        ),
+        BackgroundVideoTheme(
+            id = "breeze",
+            name = "Mountain Breeze",
+            banglaName = "স্নিগ্ধ পাহাড়ি বাতাস",
+            emoji = "🍃",
+            rawResIds = listOf(R.raw.video_breeze)
+        ),
+        BackgroundVideoTheme(
+            id = "clouds_timelapse",
+            name = "Clouds Flow",
+            banglaName = "মেঘের দূরন্ত প্রবাহ",
+            emoji = "⛅",
+            rawResIds = listOf(R.raw.video_clouds_timelapse)
+        ),
+        BackgroundVideoTheme(
+            id = "crystal_waters",
+            name = "Crystal Waters",
+            banglaName = "স্বচ্ছ কাঁচের মতো জল",
+            emoji = "🫧",
+            rawResIds = listOf(R.raw.video_crystal_waters)
+        ),
+        BackgroundVideoTheme(
+            id = "candle",
+            name = "Spiritual Glow",
+            banglaName = "শান্তিময় উজ্জ্বল আলো",
+            emoji = "🕯️",
+            rawResIds = listOf(R.raw.video_candle)
         )
     )
 
@@ -99,14 +228,11 @@ object BackgroundVideoData {
 }
 
 /**
- * 100% Silent, Clean Nature Video Background using TextureView + MediaPlayer.
- *
- * Key guarantees:
- * 1. Zero Audio Interference: Never requests audio focus, volume is strictly 0.0f,
- *    allowing recitation audio to play with full power and clarity through the media speaker.
- * 2. "মিক্সিং বাগ্রাউণ্ড" (Auto Mix): Automatically plays videos sequentially one after another.
- * 3. Offline-Ready: Bundled high-efficiency H.264 local MP4 video assets.
- * 4. Cinematic Ken Burns atmospheric backdrop transition.
+ * Fullscreen silent, looping 20-video background with support for:
+ * 1. "মিক্সিং বাগ্রাউণ্ড" (Auto Mix Videos - sequential automatic transition every 10 seconds)
+ * 2. Dedicated single serene video loops
+ * 3. 100% Guaranteed silence on video channel so recitation is crystal clear
+ * 4. Cinematic Ken Burns and smooth crossfades
  */
 @Composable
 fun AmbientVideoBackground(
@@ -114,14 +240,14 @@ fun AmbientVideoBackground(
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
     videoThemeId: String = "auto_mix",
-    autoSwitchIntervalSeconds: Int = 12
+    autoSwitchIntervalSeconds: Int = 10 // Exactly 10 seconds as requested by the user
 ) {
     val context = LocalContext.current
     val theme = remember(videoThemeId) { BackgroundVideoData.getThemeById(videoThemeId) }
     var currentVideoIndex by remember(videoThemeId) { mutableIntStateOf(0) }
     var isVideoReady by remember { mutableStateOf(false) }
 
-    // If Auto Mix (মিক্সিং বাগ্রাউণ্ড), cycle to the next video automatically every few seconds
+    // If Auto Mix (মিক্সিং বাগ্রাউণ্ড), cycle to the next video automatically every 10 seconds
     LaunchedEffect(videoThemeId, isPlaying) {
         if (theme.rawResIds.size > 1) {
             while (true) {
@@ -141,13 +267,13 @@ fun AmbientVideoBackground(
         }
     }
 
-    // Subtle Ken Burns slow zoom animation for cinematic living wallpaper feel
+    // Gentle Ken Burns subtle zoom animation
     val infiniteTransition = rememberInfiniteTransition(label = "ken_burns")
     val scaleAnim by infiniteTransition.animateFloat(
         initialValue = 1.0f,
-        targetValue = 1.06f,
+        targetValue = 1.05f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 14000, easing = LinearEasing),
+            animation = tween(durationMillis = 10000, easing = LinearEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "ken_burns_scale"
@@ -156,12 +282,12 @@ fun AmbientVideoBackground(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF07080B))
+            .background(Color(0xFF000000))
     ) {
         // 1. Silent, Muted Looping Video via TextureView & MediaPlayer
         Crossfade(
             targetState = currentRawRes,
-            animationSpec = tween(durationMillis = 900),
+            animationSpec = tween(durationMillis = 800),
             label = "video_res_crossfade"
         ) { rawRes ->
             SilentTextureVideoPlayer(
@@ -180,7 +306,7 @@ fun AmbientVideoBackground(
             )
         }
 
-        // 2. High-quality graceful fallback layer with Ken Burns animation
+        // 2. High-quality graceful fallback layer
         if (!isVideoReady) {
             val fallbackDrawable = when {
                 ambient.backgroundDrawableRes != null -> ambient.backgroundDrawableRes
@@ -198,18 +324,17 @@ fun AmbientVideoBackground(
             )
         }
 
-        // 3. Ultra-Clean Cinematic Minimalist Gradient Overlays
-        // Provides beautiful contrast for the clean buttons without dimming the video
+        // 3. Clean Cinematic Minimalist Frosted Glass Gradient Overlays
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color.Black.copy(alpha = 0.45f),
+                            Color.Black.copy(alpha = 0.40f),
                             Color.Transparent,
-                            Color.Black.copy(alpha = 0.35f),
-                            Color.Black.copy(alpha = 0.75f)
+                            Color.Black.copy(alpha = 0.30f),
+                            Color.Black.copy(alpha = 0.70f)
                         )
                     )
                 )

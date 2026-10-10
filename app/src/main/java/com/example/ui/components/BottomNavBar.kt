@@ -56,7 +56,7 @@ fun BottomNavigationBar(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xE6101117))
+            .background(Color(0xF2000000))
             .navigationBarsPadding()
     ) {
         // Thin top divider line

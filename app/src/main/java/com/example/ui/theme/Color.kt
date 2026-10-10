@@ -2,29 +2,35 @@ package com.example.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Backgrounds (Near-black luxury OLED palette)
-val BackgroundNearBlack = Color(0xFF090A0E)
-val SurfaceDark = Color(0xFF111218)
-val SurfaceCard = Color(0xFF181A22)
-val SurfaceCardElevated = Color(0xFF222530)
-val SurfaceCardBorder = Color(0x1FFFFFFF)
+// Pure OLED Black Backgrounds & Frosted Glass Palette
+val BackgroundNearBlack = Color(0xFF000000)
+val SurfaceDark = Color(0xFF0A0A0A)
+val SurfaceCard = Color(0x1FFFFFFF)          // Translucent frosted glass card
+val SurfaceCardElevated = Color(0x2BFFFFFF)  // Elevated frosted glass card
+val SurfaceCardBorder = Color(0x33FFFFFF)    // Translucent glass border outline
 
-// Warm Gold Accent Tones
-val GoldPrimary = Color(0xFFE5B84A)
-val GoldLight = Color(0xFFF7D97B)
-val GoldDark = Color(0xFFBF9330)
-val GoldContainer = Color(0xFF332A14)
-val OnGoldContainer = Color(0xFFFCEEC2)
+// Monochromatic Black & White Glass Accents (Clean Pure White)
+val GoldPrimary = Color(0xFFFFFFFF)          // Pure radiant white
+val GoldLight = Color(0xFFE8E8E8)            // Soft silver white
+val GoldDark = Color(0xFFC0C0C0)             // Metallic silver
+val GoldContainer = Color(0x2EFFFFFF)        // Frosted glass white container
+val OnGoldContainer = Color(0xFFFFFFFF)
 
-// Emerald & Spiritual Accents
-val EmeraldAccent = Color(0xFF1E9E68)
-val EmeraldContainer = Color(0xFF103322)
+// Secondary Monochromatic Accents
+val EmeraldAccent = Color(0xFFFFFFFF)
+val EmeraldContainer = Color(0x22FFFFFF)
 
-// Text
-val TextPrimary = Color(0xFFF6F7FB)
-val TextSecondary = Color(0xFFA6ABB8)
-val TextMuted = Color(0xFF6B7082)
+// High-Contrast Monochrome Text
+val TextPrimary = Color(0xFFFFFFFF)          // 100% Crisp White
+val TextSecondary = Color(0xCCFFFFFF)        // 80% Soft White
+val TextMuted = Color(0x73FFFFFF)            // 45% Translucent Muted White
 
-// Status / Control
-val ErrorColor = Color(0xFFE57373)
-val AudioWaveColor = Color(0xFFE5B84A)
+// Glass Status / Audio Waveform
+val ErrorColor = Color(0xFFFF4B4B)
+val AudioWaveColor = Color(0xFFFFFFFF)
+
+// Custom Glassmorphism Colors
+val GlassFrost = Color(0x1FFFFFFF)
+val GlassFrostStrong = Color(0x33FFFFFF)
+val GlassDarkFrost = Color(0x80000000)
+val GlassBorderWhite = Color(0x3DFFFFFF)

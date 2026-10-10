@@ -23,9 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Spa
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -37,29 +35,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import com.example.data.model.AmbientSound
-import com.example.data.model.AmbientSoundData
 import com.example.data.model.QuranData
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
 import com.example.data.model.Surah
 import com.example.player.PlayerUiState
 import com.example.ui.components.ReciterAvatar
-import com.example.ui.theme.EmeraldAccent
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.SurfaceCard
 import com.example.ui.theme.SurfaceCardBorder
-import com.example.ui.theme.SurfaceCardElevated
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
@@ -90,9 +81,9 @@ fun HomeScreen(
             .statusBarsPadding()
             .padding(horizontal = 20.dp),
         contentPadding = PaddingValues(bottom = 120.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+        verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        // TOP APP BAR
+        // TOP APP BAR (Frosted Glass Header)
         item {
             Row(
                 modifier = Modifier
@@ -109,11 +100,8 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(GoldPrimary, Color(0xFF996B12))
-                                )
-                            ),
+                            .background(Color(0x22FFFFFF))
+                            .border(1.dp, Color(0x33FFFFFF), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -142,123 +130,21 @@ fun HomeScreen(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(SurfaceCard)
-                        .border(1.dp, SurfaceCardBorder, CircleShape)
+                        .background(Color(0x1EFFFFFF))
+                        .border(1.dp, Color(0x33FFFFFF), CircleShape)
                         .testTag("home_search_button")
                 ) {
                     Icon(
                         imageVector = Icons.Filled.Search,
                         contentDescription = "Search Surahs and Reciters",
-                        tint = GoldPrimary,
+                        tint = Color.White,
                         modifier = Modifier.size(20.dp)
                     )
                 }
             }
         }
 
-        // VERSE OF THE DAY CARD
-        item {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(22.dp))
-                    .background(
-                        Brush.linearGradient(
-                            listOf(
-                                Color(0xFF2C2415),
-                                Color(0xFF1A1B24)
-                            )
-                        )
-                    )
-                    .border(1.2.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(22.dp))
-                    .padding(20.dp)
-            ) {
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Spa,
-                                contentDescription = "Daily Verse",
-                                tint = GoldPrimary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = "DAILY INSPIRATION",
-                                color = GoldPrimary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 1.sp
-                            )
-                        }
-
-                        Text(
-                            text = "Surah Ar-Ra'd • 28",
-                            color = TextMuted,
-                            fontSize = 11.sp
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Text(
-                        text = "الَّذِينَ آمَنُوا وَتَطْمَئِنُّ قُلُوبُهُم بِذِكْرِ اللَّهِ ۗ أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
-                        color = GoldPrimary,
-                        fontSize = 20.sp,
-                        lineHeight = 34.sp,
-                        textAlign = TextAlign.Right,
-                        fontWeight = FontWeight.Medium,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    Text(
-                        text = "\"Those who have believed and whose hearts are assured by the remembrance of Allah. Unquestionably, by the remembrance of Allah hearts are assured.\"",
-                        color = TextPrimary.copy(alpha = 0.9f),
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    )
-
-                    Spacer(modifier = Modifier.height(14.dp))
-
-                    Row(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(GoldPrimary)
-                            .clickable {
-                                val radSurah = QuranData.surahs.find { it.number == 13 } ?: QuranData.surahs.first()
-                                onPlaySurah(radSurah, playerState.currentReciter, playerState.ambientSound)
-                            }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                            .testTag("play_daily_verse"),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.PlayArrow,
-                            contentDescription = "Listen",
-                            tint = Color(0xFF090A0E),
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            text = "Listen to Surah Ar-Ra'd",
-                            color = Color(0xFF090A0E),
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-            }
-        }
-
-        // FEATURED RECITERS ROW
+        // BELOVED RECITERS ROW (Reciter portraits in vibrant color, surrounded by clean Glass UI)
         item {
             Column {
                 Row(
@@ -290,8 +176,14 @@ fun HomeScreen(
                                 modifier = Modifier
                                     .size(68.dp)
                                     .clip(CircleShape)
-                                    .border(1.5.dp, if (reciter.id == playerState.currentReciter.id) GoldPrimary else SurfaceCardBorder, CircleShape)
+                                    .background(Color(0x1AFFFFFF))
+                                    .border(
+                                        if (reciter.id == playerState.currentReciter.id) 2.dp else 1.2.dp,
+                                        if (reciter.id == playerState.currentReciter.id) Color.White else Color(0x33FFFFFF),
+                                        CircleShape
+                                    )
                             ) {
+                                // Reciter Avatar remains in vivid full color as requested
                                 ReciterAvatar(
                                     reciter = reciter,
                                     modifier = Modifier.fillMaxSize()
@@ -311,7 +203,7 @@ fun HomeScreen(
             }
         }
 
-        // BROWSE SURAHS SECTION WITH FILTER CHIPS
+        // BROWSE SURAHS SECTION WITH GLASS FILTER CHIPS
         item {
             Column {
                 Text(
@@ -323,7 +215,7 @@ fun HomeScreen(
 
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Filter chips
+                // Glass Filter chips
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -332,14 +224,19 @@ fun HomeScreen(
                         val isSelected = selectedFilter == cat
                         Box(
                             modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(if (isSelected) GoldPrimary else SurfaceCard)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(if (isSelected) Color.White else Color(0x1AFFFFFF))
+                                .border(
+                                    1.dp,
+                                    if (isSelected) Color.White else Color(0x33FFFFFF),
+                                    RoundedCornerShape(14.dp)
+                                )
                                 .clickable { selectedFilter = cat }
                                 .padding(horizontal = 14.dp, vertical = 7.dp)
                         ) {
                             Text(
                                 text = cat,
-                                color = if (isSelected) Color(0xFF090A0E) else TextSecondary,
+                                color = if (isSelected) Color.Black else TextSecondary,
                                 fontSize = 12.sp,
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                             )
@@ -349,7 +246,7 @@ fun HomeScreen(
             }
         }
 
-        // SURAH CARDS LIST
+        // SURAH CARDS LIST (Frosted Glass UI)
         items(displayedSurahs, key = { it.number }) { surah ->
             val isPlayingThis = playerState.isPlaying && playerState.currentSurah.number == surah.number
 
@@ -357,16 +254,16 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(if (isPlayingThis) GoldPrimary.copy(alpha = 0.12f) else SurfaceCard)
+                    .background(if (isPlayingThis) Color(0x33FFFFFF) else Color(0x16FFFFFF))
                     .border(
                         1.dp,
-                        if (isPlayingThis) GoldPrimary.copy(alpha = 0.8f) else SurfaceCardBorder,
+                        if (isPlayingThis) Color.White else Color(0x2BFFFFFF),
                         RoundedCornerShape(16.dp)
                     )
                     .clickable {
                         onPlaySurah(surah, playerState.currentReciter, playerState.ambientSound)
                     }
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .padding(horizontal = 16.dp, vertical = 13.dp)
                     .testTag("home_surah_${surah.number}")
             ) {
                 Row(
@@ -377,20 +274,21 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(38.dp)
                             .clip(CircleShape)
-                            .background(if (isPlayingThis) GoldPrimary else Color(0x18FFFFFF)),
+                            .background(if (isPlayingThis) Color.White else Color(0x22FFFFFF))
+                            .border(1.dp, Color(0x33FFFFFF), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         if (isPlayingThis) {
                             Icon(
                                 imageVector = Icons.Filled.GraphicEq,
                                 contentDescription = "Playing",
-                                tint = Color(0xFF090A0E),
+                                tint = Color.Black,
                                 modifier = Modifier.size(20.dp)
                             )
                         } else {
                             Text(
                                 text = "${surah.number}",
-                                color = GoldPrimary,
+                                color = Color.White,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -402,7 +300,7 @@ fun HomeScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = surah.nameEnglish,
-                            color = if (isPlayingThis) GoldPrimary else TextPrimary,
+                            color = Color.White,
                             fontSize = 15.sp,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -415,7 +313,7 @@ fun HomeScreen(
 
                     Text(
                         text = surah.nameArabic,
-                        color = if (isPlayingThis) GoldPrimary else TextPrimary.copy(alpha = 0.85f),
+                        color = Color.White.copy(alpha = 0.95f),
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Medium
                     )

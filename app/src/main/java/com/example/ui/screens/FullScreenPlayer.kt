@@ -323,18 +323,46 @@ fun FullScreenPlayer(
                     }
                 }
 
+                // Audio Volume / Unmute Glass Pill
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(if (state.isMuted) Color.White else Color(0x33000000))
+                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
+                        .clickable { onToggleMute() }
+                        .padding(horizontal = 14.dp, vertical = 6.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (state.isMuted) Icons.Filled.VolumeMute else Icons.Filled.VolumeUp,
+                            contentDescription = "Audio Volume",
+                            tint = if (state.isMuted) Color.Black else Color.White,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = if (state.isMuted) "মিউট আছে (আনমিউট করতে ট্যাপ করুন)" else "শব্দের ভলিউম: ১০০% 🔊",
+                            color = if (state.isMuted) Color.Black else Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.weight(1f))
 
                 // --- CLEAN BOTTOM CONTROLS ---
                 // "শুধু থাকবে স্টপ বাটনে এবং চেঞ্জ ব্যাটন"
-                // Floating minimalist glass bar with Stop, Change & Video cycle buttons
+                // Floating minimalist Black & White glass bar with Stop, Change & Video cycle buttons
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 8.dp)
                         .clip(RoundedCornerShape(32.dp))
-                        .background(Color(0x66000000))
-                        .border(1.2.dp, GoldPrimary.copy(alpha = 0.5f), RoundedCornerShape(32.dp))
+                        .background(Color(0x55000000))
+                        .border(1.2.dp, Color(0x33FFFFFF), RoundedCornerShape(32.dp))
                         .padding(horizontal = 16.dp, vertical = 10.dp)
                 ) {
                     Row(
@@ -354,7 +382,7 @@ fun FullScreenPlayer(
                             Icon(
                                 imageVector = Icons.Filled.SkipPrevious,
                                 contentDescription = "পূর্ববর্তী সূরা (Change)",
-                                tint = TextPrimary,
+                                tint = Color.White,
                                 modifier = Modifier.size(32.dp)
                             )
                             Text(
@@ -365,29 +393,21 @@ fun FullScreenPlayer(
                             )
                         }
 
-                        // স্টপ বাটন (স্টপ / প্লে বাটন - Large prominent center button)
+                        // স্টপ বাটন (স্টপ / প্লে বাটন - Pure White Glass Button)
                         Box(
                             modifier = Modifier
-                                .size(74.dp)
+                                .size(76.dp)
                                 .clip(CircleShape)
-                                .background(
-                                    Brush.radialGradient(
-                                        if (state.isPlaying) {
-                                            listOf(GoldPrimary, Color(0xFFC48E19))
-                                        } else {
-                                            listOf(Color(0xFF22C55E), Color(0xFF16A34A))
-                                        }
-                                    )
-                                )
+                                .background(Color.White)
                                 .clickable { onTogglePlay() }
                                 .testTag("player_play_pause_button"),
                             contentAlignment = Alignment.Center
                         ) {
                             if (state.isBuffering) {
                                 CircularProgressIndicator(
-                                    color = Color(0xFF090A0E),
+                                    color = Color.Black,
                                     strokeWidth = 3.dp,
-                                    modifier = Modifier.size(36.dp)
+                                    modifier = Modifier.size(34.dp)
                                 )
                             } else {
                                 Column(
@@ -397,12 +417,12 @@ fun FullScreenPlayer(
                                     Icon(
                                         imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
                                         contentDescription = if (state.isPlaying) "স্টপ বাটন" else "প্লে বাটন",
-                                        tint = Color(0xFF090A0E),
+                                        tint = Color.Black,
                                         modifier = Modifier.size(34.dp)
                                     )
                                     Text(
                                         text = if (state.isPlaying) "স্টপ" else "প্লে",
-                                        color = Color(0xFF090A0E),
+                                        color = Color.Black,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -422,7 +442,7 @@ fun FullScreenPlayer(
                             Icon(
                                 imageVector = Icons.Filled.SkipNext,
                                 contentDescription = "পরবর্তী সূরা (Change)",
-                                tint = TextPrimary,
+                                tint = Color.White,
                                 modifier = Modifier.size(32.dp)
                             )
                             Text(
@@ -451,12 +471,12 @@ fun FullScreenPlayer(
                             Icon(
                                 imageVector = Icons.Filled.Shuffle,
                                 contentDescription = "ভিডিও পরিবর্তন (Change Video)",
-                                tint = GoldPrimary,
+                                tint = Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
                             Text(
                                 text = "ভিডিও বদল",
-                                color = GoldPrimary,
+                                color = Color.White,
                                 fontSize = 10.sp,
                                 fontWeight = FontWeight.Bold
                             )

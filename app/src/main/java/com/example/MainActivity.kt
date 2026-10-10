@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
             EasyQuranifyTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFF090A0E)
+                    color = Color(0xFF000000)
                 ) {
                     MainScreen()
                 }
