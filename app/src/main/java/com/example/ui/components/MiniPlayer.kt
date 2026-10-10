@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -76,28 +77,40 @@ fun MiniPlayer(
                     .padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Surah Number Medallion / Badge
+                // Qari Avatar with Surah Badge
                 Box(
-                    modifier = Modifier
-                        .size(44.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                listOf(
-                                    Color(0xFF3B321A),
-                                    Color(0xFF1B1A1E)
-                                )
-                            )
-                        )
-                        .border(1.dp, GoldPrimary.copy(alpha = 0.5f), CircleShape),
+                    modifier = Modifier.size(46.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "${state.currentSurah.number}",
-                        color = GoldPrimary,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .clip(CircleShape)
+                            .border(1.5.dp, GoldPrimary, CircleShape)
+                    ) {
+                        ReciterAvatar(
+                            reciter = state.currentReciter,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    // Mini Surah Number at Bottom Right
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .size(18.dp)
+                            .clip(CircleShape)
+                            .background(GoldPrimary)
+                            .border(1.dp, Color(0xFF090A0E), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = "${state.currentSurah.number}",
+                            color = Color(0xFF090A0E),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 9.sp
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(12.dp))

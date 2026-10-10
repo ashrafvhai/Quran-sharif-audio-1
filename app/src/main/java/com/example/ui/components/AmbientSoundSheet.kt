@@ -19,8 +19,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -30,10 +32,15 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -61,11 +68,14 @@ import com.example.ui.theme.TextSecondary
 fun AmbientSoundSheet(
     selectedSound: AmbientSound,
     ambientVolume: Float,
+    selectedVideoThemeId: String,
     onSoundSelected: (AmbientSound) -> Unit,
     onVolumeChange: (Float) -> Unit,
+    onVideoThemeSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Video Themes & Mixing, 1: Nature Audio
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredSounds = remember(searchQuery) {
@@ -106,13 +116,13 @@ fun AmbientSoundSheet(
             ) {
                 Column {
                     Text(
-                        text = "Ambient Sounds",
+                        text = "Background & Ambience",
                         color = TextPrimary,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Calming atmosphere mixed beneath recitation",
+                        text = "ভিডিও ব্যাকগ্রাউন্ড এবং শান্তিময় আবহ নির্বাচন করুন",
                         color = TextMuted,
                         fontSize = 12.sp
                     )
@@ -130,130 +140,369 @@ fun AmbientSoundSheet(
                 }
             }
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Tab Switcher between "Background Videos" and "Ambient Sounds"
+            TabRow(
+                selectedTabIndex = selectedTab,
+                containerColor = Color(0x33000000),
+                contentColor = GoldPrimary,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                        color = GoldPrimary
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+            ) {
+                Tab(
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Videocam,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = if (selectedTab == 0) GoldPrimary else TextSecondary
+                            )
+                            Text(
+                                text = "Background Videos",
+                                fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selectedTab == 0) GoldPrimary else TextSecondary
+                            )
+                        }
+                    }
+                )
+                Tab(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    text = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.VolumeUp,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp),
+                                tint = if (selectedTab == 1) GoldPrimary else TextSecondary
+                            )
+                            Text(
+                                text = "Ambient Sounds",
+                                fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selectedTab == 1) GoldPrimary else TextSecondary
+                            )
+                        }
+                    }
+                )
+            }
+
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Ambient Volume Slider Section
-            if (selectedSound.id != "none") {
+            if (selectedTab == 0) {
+                // VIDEO BACKGROUNDS & MIXING (মিক্সিং বাগ্রাউণ্ড)
+                Text(
+                    text = "ভিডিও মোড ও মিক্সিং পছন্দ করুন (100% নীরব ব্যাকগ্রাউন্ড):",
+                    color = TextSecondary,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Highlighted "মিক্সিং বাগ্রাউণ্ড" Auto Mix Banner Card
+                val autoMixTheme = BackgroundVideoData.themes.first { it.id == "auto_mix" }
+                val isAutoMixSelected = selectedVideoThemeId == autoMixTheme.id
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(SurfaceCard)
-                        .border(1.dp, SurfaceCardBorder, RoundedCornerShape(16.dp))
-                        .padding(horizontal = 14.dp, vertical = 10.dp)
+                        .then(
+                            if (isAutoMixSelected) {
+                                Modifier.background(
+                                    Brush.horizontalGradient(
+                                        listOf(
+                                            GoldPrimary.copy(alpha = 0.25f),
+                                            Color(0xFF262015)
+                                        )
+                                    )
+                                )
+                            } else {
+                                Modifier.background(SurfaceCard)
+                            }
+                        )
+                        .border(
+                            if (isAutoMixSelected) 2.dp else 1.dp,
+                            if (isAutoMixSelected) GoldPrimary else SurfaceCardBorder,
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable { onVideoThemeSelected(autoMixTheme.id) }
+                        .padding(14.dp)
+                        .testTag("video_theme_auto_mix")
                 ) {
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(if (isAutoMixSelected) GoldPrimary else Color(0x22FFFFFF)),
+                            contentAlignment = Alignment.Center
                         ) {
+                            Icon(
+                                imageVector = Icons.Filled.AutoAwesome,
+                                contentDescription = "Auto Mix",
+                                tint = if (isAutoMixSelected) Color(0xFF090A0E) else GoldPrimary,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Filled.VolumeUp,
-                                    contentDescription = "Ambient Volume",
-                                    tint = GoldPrimary,
-                                    modifier = Modifier.size(18.dp)
+                                Text(
+                                    text = autoMixTheme.banglaName, // মিক্সিং বাগ্রাউণ্ড
+                                    color = if (isAutoMixSelected) GoldPrimary else TextPrimary,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = "Ambient Mix Level",
-                                    color = TextPrimary,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
+                                    text = "• Auto Shuffle",
+                                    color = TextMuted,
+                                    fontSize = 12.sp
                                 )
                             }
                             Text(
-                                text = "${(ambientVolume * 100).toInt()}%",
-                                color = GoldPrimary,
-                                fontSize = 13.sp,
-                                fontWeight = FontWeight.Bold
+                                text = "একটার পর একটা শান্তিময় ভিডিও স্বয়ংক্রিয়ভাবে প্লে হবে",
+                                color = TextMuted,
+                                fontSize = 12.sp
                             )
                         }
 
-                        Slider(
-                            value = ambientVolume.coerceIn(0f, 1f),
-                            onValueChange = { onVolumeChange(it.coerceIn(0f, 1f)) },
-                            valueRange = 0f..1f,
-                            colors = SliderDefaults.colors(
-                                thumbColor = GoldPrimary,
-                                activeTrackColor = GoldPrimary,
-                                inactiveTrackColor = Color(0x33FFFFFF)
-                            ),
-                            modifier = Modifier.testTag("ambient_volume_slider")
-                        )
+                        if (isAutoMixSelected) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(GoldPrimary)
+                                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                            ) {
+                                Text(
+                                    text = "ACTIVE",
+                                    color = Color(0xFF090A0E),
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                     }
                 }
-                Spacer(modifier = Modifier.height(12.dp))
-            }
 
-            // Search Bar
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = {
-                    Text(
-                        text = "Search background sounds...",
-                        color = TextMuted,
-                        fontSize = 14.sp
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Search",
-                        tint = TextMuted,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = { searchQuery = "" }) {
-                            Icon(
-                                imageVector = Icons.Filled.Close,
-                                contentDescription = "Clear",
-                                tint = TextMuted,
-                                modifier = Modifier.size(18.dp)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Grid of single video themes
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp)
+                ) {
+                    items(BackgroundVideoData.themes.filter { it.id != "auto_mix" }, key = { it.id }) { vTheme ->
+                        val isSelected = vTheme.id == selectedVideoThemeId
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .then(
+                                    if (isSelected) {
+                                        Modifier.background(
+                                            Brush.verticalGradient(
+                                                listOf(
+                                                    GoldPrimary.copy(alpha = 0.25f),
+                                                    Color(0xFF262015)
+                                                )
+                                            )
+                                        )
+                                    } else {
+                                        Modifier.background(SurfaceCard)
+                                    }
+                                )
+                                .border(
+                                    if (isSelected) 1.8.dp else 1.dp,
+                                    if (isSelected) GoldPrimary else SurfaceCardBorder,
+                                    RoundedCornerShape(14.dp)
+                                )
+                                .clickable { onVideoThemeSelected(vTheme.id) }
+                                .padding(vertical = 12.dp, horizontal = 6.dp)
+                                .testTag("video_theme_${vTheme.id}"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.Center
+                            ) {
+                                Text(
+                                    text = vTheme.emoji,
+                                    fontSize = 24.sp
+                                )
+                                Spacer(modifier = Modifier.height(6.dp))
+                                Text(
+                                    text = vTheme.name,
+                                    color = if (isSelected) GoldPrimary else TextPrimary,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1
+                                )
+                                Text(
+                                    text = vTheme.banglaName,
+                                    color = TextMuted,
+                                    fontSize = 10.sp,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                // AMBIENT SOUNDS TAB
+                // Ambient Volume Slider Section
+                if (selectedSound.id != "none") {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(SurfaceCard)
+                            .border(1.dp, SurfaceCardBorder, RoundedCornerShape(16.dp))
+                            .padding(horizontal = 14.dp, vertical = 10.dp)
+                    ) {
+                        Column {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Filled.VolumeUp,
+                                        contentDescription = "Ambient Volume",
+                                        tint = GoldPrimary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Text(
+                                        text = "Ambient Mix Level",
+                                        color = TextPrimary,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                                Text(
+                                    text = "${(ambientVolume * 100).toInt()}%",
+                                    color = GoldPrimary,
+                                    fontSize = 13.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            Slider(
+                                value = ambientVolume.coerceIn(0f, 1f),
+                                onValueChange = { onVolumeChange(it.coerceIn(0f, 1f)) },
+                                valueRange = 0f..1f,
+                                colors = SliderDefaults.colors(
+                                    thumbColor = GoldPrimary,
+                                    activeTrackColor = GoldPrimary,
+                                    inactiveTrackColor = Color(0x33FFFFFF)
+                                ),
+                                modifier = Modifier.testTag("ambient_volume_slider")
                             )
                         }
                     }
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceCard,
-                    unfocusedContainerColor = SurfaceCard,
-                    focusedBorderColor = GoldPrimary,
-                    unfocusedBorderColor = SurfaceCardBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("ambient_search_input")
-            )
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
 
-            Spacer(modifier = Modifier.height(14.dp))
+                // Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = {
+                        Text(
+                            text = "Search background sounds...",
+                            color = TextMuted,
+                            fontSize = 14.sp
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Search",
+                            tint = TextMuted,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(
+                                    imageVector = Icons.Filled.Close,
+                                    contentDescription = "Clear",
+                                    tint = TextMuted,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = SurfaceCard,
+                        unfocusedContainerColor = SurfaceCard,
+                        focusedBorderColor = GoldPrimary,
+                        unfocusedBorderColor = SurfaceCardBorder,
+                        focusedTextColor = TextPrimary,
+                        unfocusedTextColor = TextPrimary
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag("ambient_search_input")
+                )
 
-            // 3-Column Grid of 14 Ambient Sounds
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(bottom = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(340.dp)
-            ) {
-                items(filteredSounds, key = { it.id }) { sound ->
-                    val isSelected = sound.id == selectedSound.id
-                    AmbientSoundCard(
-                        sound = sound,
-                        isSelected = isSelected,
-                        onClick = { onSoundSelected(sound) }
-                    )
+                Spacer(modifier = Modifier.height(14.dp))
+
+                // 3-Column Grid of 14 Ambient Sounds
+                LazyVerticalGrid(
+                    columns = GridCells.Fixed(3),
+                    contentPadding = PaddingValues(bottom = 24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(260.dp)
+                ) {
+                    items(filteredSounds, key = { it.id }) { sound ->
+                        val isSelected = sound.id == selectedSound.id
+                        AmbientSoundCard(
+                            sound = sound,
+                            isSelected = isSelected,
+                            onClick = { onSoundSelected(sound) }
+                        )
+                    }
                 }
             }
         }

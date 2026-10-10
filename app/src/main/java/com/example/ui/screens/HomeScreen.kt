@@ -54,6 +54,7 @@ import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
 import com.example.data.model.Surah
 import com.example.player.PlayerUiState
+import com.example.ui.components.ReciterAvatar
 import com.example.ui.theme.EmeraldAccent
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.SurfaceCard
@@ -63,16 +64,6 @@ import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
 
-data class AmbientPreset(
-    val title: String,
-    val subtitle: String,
-    val surahNumber: Int,
-    val reciterId: String,
-    val ambientId: String,
-    val coverUrl: String,
-    val gradientColors: List<Color>
-)
-
 @Composable
 fun HomeScreen(
     playerState: PlayerUiState,
@@ -81,47 +72,6 @@ fun HomeScreen(
     onOpenSearch: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val presets = remember {
-        listOf(
-            AmbientPreset(
-                title = "Rain & Solace",
-                subtitle = "Surah Ar-Rahman • Mishary Alafasy",
-                surahNumber = 55,
-                reciterId = "afs",
-                ambientId = "rain",
-                coverUrl = "https://images.unsplash.com/photo-1515694346937-94d85e41e6f0?w=600&auto=format&fit=crop&q=80",
-                gradientColors = listOf(Color(0xFF1D2833), Color(0xFF10161C))
-            ),
-            AmbientPreset(
-                title = "Ocean Sunset Calm",
-                subtitle = "Surah Al-Mulk • Yasser Al-Dosari",
-                surahNumber = 67,
-                reciterId = "yasser",
-                ambientId = "wave",
-                coverUrl = "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&auto=format&fit=crop&q=80",
-                gradientColors = listOf(Color(0xFF2B2117), Color(0xFF140F0A))
-            ),
-            AmbientPreset(
-                title = "Forest Dawn",
-                subtitle = "Surah Maryam • Al-Sudais",
-                surahNumber = 19,
-                reciterId = "sds",
-                ambientId = "birds",
-                coverUrl = "https://images.unsplash.com/photo-1448375240586-882707db888b?w=600&auto=format&fit=crop&q=80",
-                gradientColors = listOf(Color(0xFF162E20), Color(0xFF0C1710))
-            ),
-            AmbientPreset(
-                title = "Tahajjud Breeze",
-                subtitle = "Surah Al-Kahf • Maher Al-Muaiqly",
-                surahNumber = 18,
-                reciterId = "maher",
-                ambientId = "wind",
-                coverUrl = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80",
-                gradientColors = listOf(Color(0xFF1C1D2B), Color(0xFF0F1017))
-            )
-        )
-    }
-
     var selectedFilter by remember { mutableStateOf("All") }
     val categories = listOf("All", "Meccan", "Medinan", "Juz 'Amma")
 
@@ -180,7 +130,7 @@ fun HomeScreen(
                             letterSpacing = (-0.5).sp
                         )
                         Text(
-                            text = "Calming Ambient Quran Recitations",
+                            text = "Holy Quran Recitations",
                             color = TextMuted,
                             fontSize = 12.sp
                         )
@@ -308,114 +258,6 @@ fun HomeScreen(
             }
         }
 
-        // CALMING AMBIENT RECITATIONS SECTION
-        item {
-            Column {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Calming Ambient Mixes",
-                        color = TextPrimary,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Curated",
-                        color = GoldPrimary,
-                        fontSize = 12.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(14.dp)
-                ) {
-                    items(presets) { preset ->
-                        Box(
-                            modifier = Modifier
-                                .width(220.dp)
-                                .clip(RoundedCornerShape(18.dp))
-                                .background(
-                                    Brush.verticalGradient(preset.gradientColors)
-                                )
-                                .border(1.dp, SurfaceCardBorder, RoundedCornerShape(18.dp))
-                                .clickable {
-                                    val surah = QuranData.surahs.find { it.number == preset.surahNumber } ?: QuranData.surahs.first()
-                                    val reciter = ReciterData.getById(preset.reciterId)
-                                    val ambient = AmbientSoundData.getById(preset.ambientId)
-                                    onPlaySurah(surah, reciter, ambient)
-                                }
-                                .padding(14.dp)
-                                .testTag("preset_${preset.ambientId}")
-                        ) {
-                            Column {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(110.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                ) {
-                                    AsyncImage(
-                                        model = preset.coverUrl,
-                                        contentDescription = preset.title,
-                                        contentScale = ContentScale.Crop,
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f))
-                                                )
-                                            )
-                                    )
-                                    val sound = AmbientSoundData.getById(preset.ambientId)
-                                    Box(
-                                        modifier = Modifier
-                                            .align(Alignment.BottomStart)
-                                            .padding(8.dp)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(Color(0x99000000))
-                                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                                    ) {
-                                        Text(
-                                            text = "${sound.emoji} ${sound.name}",
-                                            color = GoldPrimary,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Text(
-                                    text = preset.title,
-                                    color = TextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    maxLines = 1
-                                )
-                                Text(
-                                    text = preset.subtitle,
-                                    color = TextMuted,
-                                    fontSize = 12.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         // FEATURED RECITERS ROW
         item {
             Column {
@@ -450,10 +292,8 @@ fun HomeScreen(
                                     .clip(CircleShape)
                                     .border(1.5.dp, if (reciter.id == playerState.currentReciter.id) GoldPrimary else SurfaceCardBorder, CircleShape)
                             ) {
-                                AsyncImage(
-                                    model = reciter.avatarUrl,
-                                    contentDescription = reciter.name,
-                                    contentScale = ContentScale.Crop,
+                                ReciterAvatar(
+                                    reciter = reciter,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }

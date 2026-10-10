@@ -37,6 +37,7 @@ import com.example.ui.components.BottomNavigationBar
 import com.example.ui.components.GlobalSearchSheet
 import com.example.ui.components.MiniPlayer
 import com.example.ui.components.MushafViewerSheet
+import com.example.ui.components.ReciterSwitcherSheet
 import com.example.ui.components.SleepTimerDialog
 import com.example.ui.components.SurahQueueSheet
 import com.example.ui.screens.FullScreenPlayer
@@ -77,6 +78,7 @@ fun MainScreen() {
     var showMushafSheet by remember { mutableStateOf(false) }
     var showSleepTimerSheet by remember { mutableStateOf(false) }
     var showGlobalSearchSheet by remember { mutableStateOf(false) }
+    var showReciterSwitcherSheet by remember { mutableStateOf(false) }
 
     var mushafSurahTarget by remember { mutableStateOf(playerState.currentSurah) }
 
@@ -281,21 +283,37 @@ fun MainScreen() {
                     showMushafSheet = true
                 },
                 onOpenSleepTimer = { showSleepTimerSheet = true },
+                onOpenReciterSwitcher = { showReciterSwitcherSheet = true },
                 onToggleMute = { playerManager.toggleMute() },
-                onMinimize = { isPlayerExpanded = false }
+                onMinimize = { isPlayerExpanded = false },
+                onSelectVideoTheme = { themeId -> playerManager.setVideoTheme(themeId) }
             )
         }
 
         // BOTTOM SHEETS
+        if (showReciterSwitcherSheet) {
+            ReciterSwitcherSheet(
+                currentReciter = playerState.currentReciter,
+                onSelectReciter = { reciter ->
+                    playerManager.switchReciter(reciter)
+                    showReciterSwitcherSheet = false
+                },
+                onDismiss = { showReciterSwitcherSheet = false }
+            )
+        }
         if (showAmbientSheet) {
             AmbientSoundSheet(
                 selectedSound = playerState.ambientSound,
                 ambientVolume = playerState.ambientVolume,
+                selectedVideoThemeId = playerState.selectedVideoThemeId,
                 onSoundSelected = { sound ->
                     playerManager.setAmbientSound(sound)
                 },
                 onVolumeChange = { vol ->
                     playerManager.setAmbientVolume(vol)
+                },
+                onVideoThemeSelected = { themeId ->
+                    playerManager.setVideoTheme(themeId)
                 },
                 onDismiss = { showAmbientSheet = false }
             )

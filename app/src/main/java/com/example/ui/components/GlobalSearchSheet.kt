@@ -47,6 +47,7 @@ import com.example.data.model.QuranData
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
 import com.example.data.model.Surah
+import com.example.ui.components.ReciterAvatar
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.SurfaceCard
 import com.example.ui.theme.SurfaceCardBorder
@@ -221,11 +222,12 @@ fun GlobalSearchSheet(
                                     .padding(horizontal = 14.dp, vertical = 10.dp)
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Person,
-                                        contentDescription = "Reciter",
-                                        tint = GoldPrimary,
-                                        modifier = Modifier.size(20.dp)
+                                    ReciterAvatar(
+                                        reciter = reciter,
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .border(1.dp, GoldPrimary, CircleShape)
                                     )
                                     Spacer(modifier = Modifier.width(12.dp))
                                     Column(modifier = Modifier.weight(1f)) {

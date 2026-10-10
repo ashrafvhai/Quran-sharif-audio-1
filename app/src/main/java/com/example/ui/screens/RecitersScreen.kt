@@ -52,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
+import com.example.ui.components.ReciterAvatar
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.SurfaceCard
 import com.example.ui.theme.SurfaceCardBorder
@@ -238,10 +239,8 @@ private fun FeaturedReciterHeroCard(
                     .clip(CircleShape)
                     .border(2.5.dp, GoldPrimary, CircleShape)
             ) {
-                AsyncImage(
-                    model = reciter.avatarUrl,
-                    contentDescription = reciter.name,
-                    contentScale = ContentScale.Crop,
+                ReciterAvatar(
+                    reciter = reciter,
                     modifier = Modifier.fillMaxSize()
                 )
             }
@@ -334,10 +333,8 @@ private fun ReciterGridItem(
                 .background(SurfaceCard)
                 .border(1.5.dp, SurfaceCardBorder, CircleShape)
         ) {
-            AsyncImage(
-                model = reciter.avatarUrl,
-                contentDescription = reciter.name,
-                contentScale = ContentScale.Crop,
+            ReciterAvatar(
+                reciter = reciter,
                 modifier = Modifier.fillMaxSize()
             )
         }
