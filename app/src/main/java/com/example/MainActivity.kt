@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
             EasyQuranifyTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = Color(0xFF000000)
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.background
                 ) {
                     MainScreen()
                 }

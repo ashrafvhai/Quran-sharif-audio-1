@@ -77,10 +77,15 @@ class AudioPlayerManager(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 }
+                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
                 val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                am.setStreamVolume(AudioManager.STREAM_MUSIC, maxVol, AudioManager.FLAG_SHOW_UI)
+                if (currentVol <= (maxVol * 0.3f)) {
+                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.85f).toInt().coerceAtLeast(1), 0)
+                }
             }
-        } catch (_: Exception) {}
+        } catch (e: Exception) {
+            Log.w(TAG, "Notice setting volume: ${e.message}")
+        }
         try {
             recitationPlayer?.setVolume(1.0f, 1.0f)
         } catch (_: Exception) {}
@@ -117,17 +122,19 @@ class AudioPlayerManager(
     private fun requestSystemAudioFocus() {
         try {
             audioManager?.let { am ->
-                // Ensure media stream is unmuted and at max audible volume
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
                 }
+                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
                 val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                am.setStreamVolume(AudioManager.STREAM_MUSIC, maxVol, AudioManager.FLAG_SHOW_UI)
+                if (currentVol <= (maxVol * 0.3f)) {
+                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.85f).toInt().coerceAtLeast(1), 0)
+                }
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val playbackAttributes = AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                     val focusReq = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                         .setAudioAttributes(playbackAttributes)
@@ -201,7 +208,7 @@ class AudioPlayerManager(
                     // Set MUSIC audio attributes so sound routes through media speaker clearly
                     setAudioAttributes(
                         AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                             .setUsage(AudioAttributes.USAGE_MEDIA)
                             .setLegacyStreamType(AudioManager.STREAM_MUSIC)
                             .build()

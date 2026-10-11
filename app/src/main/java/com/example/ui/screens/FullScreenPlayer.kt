@@ -1,14 +1,5 @@
 package com.example.ui.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -28,14 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AutoAwesome
-import androidx.compose.material.icons.filled.Cast
 import androidx.compose.material.icons.filled.FastForward
 import androidx.compose.material.icons.filled.FastRewind
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material.icons.filled.Nightlight
-import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.QueueMusic
 import androidx.compose.material.icons.filled.Shuffle
@@ -43,7 +31,6 @@ import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.Stop
-import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.filled.VolumeMute
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.icons.outlined.StarBorder
@@ -65,9 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -79,11 +64,9 @@ import com.example.player.PlayerUiState
 import com.example.ui.components.AmbientVideoBackground
 import com.example.ui.components.BackgroundVideoData
 import com.example.ui.components.ReciterAvatar
-import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
-import kotlinx.coroutines.launch
 
 @Composable
 fun FullScreenPlayer(
@@ -110,25 +93,10 @@ fun FullScreenPlayer(
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Clean Display Mode (True by default whenever video is playing as requested by the user)
-    var isCleanDisplayMode by remember { mutableStateOf(true) }
-
-    // Current background video theme
+    // Current background scene theme
     val currentVideoTheme = remember(state.selectedVideoThemeId) {
         BackgroundVideoData.getThemeById(state.selectedVideoThemeId)
     }
-
-    // Vinyl rotation animation for details mode
-    val infiniteTransition = rememberInfiniteTransition(label = "vinyl")
-    val rotation by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(28000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "rotation"
-    )
 
     // User dragging slider state
     var isDraggingSlider by remember { mutableStateOf(false) }
@@ -144,9 +112,9 @@ fun FullScreenPlayer(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF090A0E))
+            .background(Color.Black)
     ) {
-        // 1. Full-Bleed Nature Video Background (100% Silent, Clean, Auto-mixing / Sequential)
+        // 1. Serene Still Image Background (Smooth, Clean, Crisp)
         AmbientVideoBackground(
             ambient = state.ambientSound,
             isPlaying = state.isPlaying,
@@ -154,17 +122,19 @@ fun FullScreenPlayer(
             modifier = Modifier.fillMaxSize()
         )
 
-        // 2. Foreground Layout
+        // 2. Foreground Layout: Top Bar -> Completely Empty Middle -> Bottom Control Dock
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .statusBarsPadding()
                 .navigationBarsPadding()
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+                .padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            // TOP BAR: Minimize, Background Changer Option Pill, Favorite & Mode Toggle
+            // ==========================================================
+            // TOP BAR: Minimalist & Clean
+            // ==========================================================
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -172,29 +142,30 @@ fun FullScreenPlayer(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Minimize Button
+                // Minimize Down Arrow Button
                 IconButton(
                     onClick = onMinimize,
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(Color(0x44000000))
+                        .background(Color(0x55000000))
+                        .border(1.dp, Color(0x33FFFFFF), CircleShape)
                         .testTag("player_minimize_button")
                 ) {
                     Icon(
                         imageVector = Icons.Filled.KeyboardArrowDown,
                         contentDescription = "Minimize Player",
-                        tint = TextPrimary,
+                        tint = Color.White,
                         modifier = Modifier.size(28.dp)
                     )
                 }
 
-                // Top Background Changer Option Pill ("baground চেঞ্জ করার যেই অপশন টা উপর দিয়ে আছে ঐটা থাকবে")
+                // Top Background Theme Pill (Click to open 20 themes sheet)
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
                         .background(Color(0x66000000))
-                        .border(1.2.dp, GoldPrimary.copy(alpha = 0.8f), RoundedCornerShape(24.dp))
+                        .border(1.2.dp, Color(0x44FFFFFF), RoundedCornerShape(24.dp))
                         .clickable { onOpenAmbientSheet() }
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                         .testTag("ambient_sound_pill")
@@ -208,38 +179,44 @@ fun FullScreenPlayer(
                             fontSize = 15.sp
                         )
                         Text(
-                            text = currentVideoTheme.banglaName, // e.g. "মিক্সিং বাগ্রাউণ্ড" or "সমুদ্র ও ঢেউ"
-                            color = GoldPrimary,
+                            text = currentVideoTheme.name,
+                            color = Color.White,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Icon(
                             imageVector = Icons.Filled.KeyboardArrowDown,
                             contentDescription = "Change Background",
-                            tint = GoldPrimary,
+                            tint = Color.White.copy(alpha = 0.8f),
                             modifier = Modifier.size(16.dp)
                         )
                     }
                 }
 
-                // Right controls: Clean / Detail mode switch & Favorite Star
+                // Top Right Controls (Theme Cycle & Favorite Star)
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Mode Toggle (Clean Video View vs Detailed View)
+                    // Quick Theme Cycle Button
                     IconButton(
-                        onClick = { isCleanDisplayMode = !isCleanDisplayMode },
+                        onClick = {
+                            val themes = BackgroundVideoData.individualThemes
+                            val currentIndex = themes.indexOfFirst { it.id == state.selectedVideoThemeId }
+                            val nextTheme = themes[(currentIndex + 1).coerceAtLeast(0) % themes.size]
+                            onSelectVideoTheme?.invoke(nextTheme.id)
+                        },
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(if (!isCleanDisplayMode) GoldPrimary.copy(alpha = 0.3f) else Color(0x44000000))
-                            .testTag("player_mode_toggle_button")
+                            .background(Color(0x55000000))
+                            .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                            .testTag("player_quick_theme_cycle")
                     ) {
                         Icon(
-                            imageVector = if (isCleanDisplayMode) Icons.Filled.Tune else Icons.Filled.AutoAwesome,
-                            contentDescription = if (isCleanDisplayMode) "Show Full Details" else "Clean Video View",
-                            tint = if (isCleanDisplayMode) TextSecondary else GoldPrimary,
+                            imageVector = Icons.Filled.Shuffle,
+                            contentDescription = "Cycle Scene Theme",
+                            tint = Color.White,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -250,155 +227,209 @@ fun FullScreenPlayer(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(Color(0x44000000))
+                            .background(Color(0x55000000))
+                            .border(1.dp, Color(0x33FFFFFF), CircleShape)
                             .testTag("player_favorite_button")
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarBorder,
                             contentDescription = "Favorite",
-                            tint = if (isFavorite) GoldPrimary else TextPrimary,
+                            tint = Color.White,
                             modifier = Modifier.size(22.dp)
                         )
                     }
                 }
             }
 
-            // ==========================================
-            // CENTER DISPLAY (CLEAN MODE vs FULL DETAIL)
-            // ==========================================
-            if (isCleanDisplayMode) {
-                // --- ULTRA-CLEAN DISPLAY MODE ---
-                // The center is completely uncluttered so the video is fully visible!
-                Spacer(modifier = Modifier.weight(1f))
+            // ==========================================================
+            // CENTER: COMPLETELY EMPTY AS REQUESTED
+            // "মাঝখান থেকে সবকিছু সর মাসখানে যেনো কিসু না থাকে"
+            // ZERO visual elements here, allowing the user to experience
+            // the background scenery completely clean and unobstructed!
+            // ==========================================================
+            Spacer(modifier = Modifier.weight(1f))
 
-                // Elegant floating frosted info pill for Surah and Qari
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0x55000000))
-                        .border(1.dp, GoldPrimary.copy(alpha = 0.4f), RoundedCornerShape(20.dp))
-                        .padding(horizontal = 20.dp, vertical = 12.dp)
-                        .shadow(8.dp, RoundedCornerShape(20.dp)),
-                    contentAlignment = Alignment.Center
+            // ==========================================================
+            // BOTTOM CONTROL DOCK: Unified, Ultra-Smooth, Glass UI
+            // "কন্ট্রোল এর ঐটা সরিয়ে এটা লাগাও"
+            // ==========================================================
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(30.dp))
+                    .background(Color(0x88000000))
+                    .border(1.2.dp, Color(0x38FFFFFF), RoundedCornerShape(30.dp))
+                    .shadow(16.dp, RoundedCornerShape(30.dp))
+                    .padding(horizontal = 16.dp, vertical = 14.dp)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    // 1. TRACK & RECITER INFO ROW
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpenReciterSwitcher() }
+                            .padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = state.currentSurah.nameArabic,
-                            color = GoldPrimary,
-                            fontSize = 26.sp,
-                            fontWeight = FontWeight.Bold,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            text = "${state.currentSurah.nameEnglish} • ${state.currentReciter.name}",
-                            color = TextPrimary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            textAlign = TextAlign.Center
-                        )
+                        // Reciter Info with colorful circle avatar
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(CircleShape)
+                                    .border(1.5.dp, Color.White, CircleShape)
+                            ) {
+                                ReciterAvatar(
+                                    reciter = state.currentReciter,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+                            }
+
+                            Column {
+                                Text(
+                                    text = state.currentReciter.name,
+                                    color = Color.White,
+                                    fontSize = 15.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "${state.currentReciter.subtitle} • Tap to switch",
+                                    color = TextSecondary,
+                                    fontSize = 11.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        // Surah Information Badge
+                        Column(
+                            horizontalAlignment = Alignment.End,
+                            modifier = Modifier.padding(start = 8.dp)
                         ) {
                             Text(
-                                text = formatTimeMs(state.currentPositionMs),
-                                color = GoldPrimary,
-                                fontSize = 12.sp,
+                                text = state.currentSurah.nameArabic,
+                                color = Color.White,
+                                fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "/",
+                                text = "${state.currentSurah.nameEnglish} • #${state.currentSurah.number}",
                                 color = TextMuted,
-                                fontSize = 12.sp
-                            )
-                            Text(
-                                text = formatTimeMs(state.durationMs),
-                                color = TextSecondary,
-                                fontSize = 12.sp
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
-                }
 
-                // Audio Volume / Unmute Glass Pill
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (state.isMuted) Color.White else Color(0x33000000))
-                        .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(20.dp))
-                        .clickable { onToggleMute() }
-                        .padding(horizontal = 14.dp, vertical = 6.dp)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    // 2. SLIDER & TIMESTAMPS
+                    Column(
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Icon(
-                            imageVector = if (state.isMuted) Icons.Filled.VolumeMute else Icons.Filled.VolumeUp,
-                            contentDescription = "Audio Volume",
-                            tint = if (state.isMuted) Color.Black else Color.White,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Text(
-                            text = if (state.isMuted) "মিউট আছে (আনমিউট করতে ট্যাপ করুন)" else "শব্দের ভলিউম: ১০০% 🔊",
-                            color = if (state.isMuted) Color.Black else Color.White,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.weight(1f))
-
-                // --- CLEAN BOTTOM CONTROLS ---
-                // "শুধু থাকবে স্টপ বাটনে এবং চেঞ্জ ব্যাটন"
-                // Floating minimalist Black & White glass bar with Stop, Change & Video cycle buttons
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
-                        .clip(RoundedCornerShape(32.dp))
-                        .background(Color(0x55000000))
-                        .border(1.2.dp, Color(0x33FFFFFF), RoundedCornerShape(32.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // চেঞ্জ বাটন (পূর্ববর্তী সূরা)
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        Slider(
+                            value = currentSliderValue.coerceIn(0f, maxDuration),
+                            onValueChange = {
+                                isDraggingSlider = true
+                                dragSliderPosition = it.coerceIn(0f, maxDuration)
+                            },
+                            onValueChangeFinished = {
+                                isDraggingSlider = false
+                                onSeekTo(dragSliderPosition.toLong())
+                            },
+                            valueRange = 0f..maxDuration,
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color.White,
+                                activeTrackColor = Color.White,
+                                inactiveTrackColor = Color(0x33FFFFFF)
+                            ),
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { onPrevious() }
-                                .padding(8.dp)
-                                .testTag("player_previous_button")
+                                .fillMaxWidth()
+                                .height(22.dp)
+                                .testTag("player_seek_slider")
+                        )
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Icon(
-                                imageVector = Icons.Filled.SkipPrevious,
-                                contentDescription = "পূর্ববর্তী সূরা (Change)",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
-                            )
+                            val currentPos = if (isDraggingSlider) dragSliderPosition.toLong() else state.currentPositionMs
                             Text(
-                                text = "পূর্ববর্তী",
+                                text = formatTimeMs(currentPos),
+                                color = TextSecondary,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                            val remainingMs = (state.durationMs - currentPos).coerceAtLeast(0L)
+                            Text(
+                                text = "-${formatTimeMs(remainingMs)}",
                                 color = TextSecondary,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }
+                    }
 
-                        // স্টপ বাটন (স্টপ / প্লে বাটন - Pure White Glass Button)
+                    // 3. MAIN CONTROLS ROW: Prev, Rewind 15, Stop/Play, Forward 15, Next
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceEvenly,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Previous Surah Button
+                        IconButton(
+                            onClick = onPrevious,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x33FFFFFF))
+                                .testTag("player_previous_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.SkipPrevious,
+                                contentDescription = "Previous Surah",
+                                tint = Color.White,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+
+                        // Rewind 15s Button
+                        IconButton(
+                            onClick = onSkip15Backward,
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x22FFFFFF))
+                                .testTag("player_skip_backward_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.FastRewind,
+                                contentDescription = "Rewind 15 seconds",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        // Stop / Play Button - Pure White High Contrast Round Button
                         Box(
                             modifier = Modifier
-                                .size(76.dp)
+                                .size(70.dp)
                                 .clip(CircleShape)
                                 .background(Color.White)
+                                .border(2.dp, Color.White, CircleShape)
                                 .clickable { onTogglePlay() }
                                 .testTag("player_play_pause_button"),
                             contentAlignment = Alignment.Center
@@ -407,7 +438,7 @@ fun FullScreenPlayer(
                                 CircularProgressIndicator(
                                     color = Color.Black,
                                     strokeWidth = 3.dp,
-                                    modifier = Modifier.size(34.dp)
+                                    modifier = Modifier.size(32.dp)
                                 )
                             } else {
                                 Column(
@@ -416,464 +447,192 @@ fun FullScreenPlayer(
                                 ) {
                                     Icon(
                                         imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                                        contentDescription = if (state.isPlaying) "স্টপ বাটন" else "প্লে বাটন",
+                                        contentDescription = if (state.isPlaying) "Stop Button" else "Play Button",
                                         tint = Color.Black,
-                                        modifier = Modifier.size(34.dp)
+                                        modifier = Modifier.size(32.dp)
                                     )
                                     Text(
-                                        text = if (state.isPlaying) "স্টপ" else "প্লে",
+                                        text = if (state.isPlaying) "Stop" else "Play",
                                         color = Color.Black,
-                                        fontSize = 11.sp,
+                                        fontSize = 10.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                             }
                         }
 
-                        // চেঞ্জ বাটন (পরবর্তী সূরা)
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
+                        // Forward 15s Button
+                        IconButton(
+                            onClick = onSkip15Forward,
                             modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable { onNext() }
-                                .padding(8.dp)
+                                .size(42.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x22FFFFFF))
+                                .testTag("player_skip_forward_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.FastForward,
+                                contentDescription = "Forward 15 seconds",
+                                tint = Color.White,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        // Next Surah Button
+                        IconButton(
+                            onClick = onNext,
+                            modifier = Modifier
+                                .size(46.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x33FFFFFF))
                                 .testTag("player_next_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.SkipNext,
-                                contentDescription = "পরবর্তী সূরা (Change)",
-                                tint = Color.White,
-                                modifier = Modifier.size(32.dp)
-                            )
-                            Text(
-                                text = "পরবর্তী",
-                                color = TextSecondary,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
-                            )
-                        }
-
-                        // ভিডিও চেঞ্জ বাটন (Quick Background Scene Change)
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(16.dp))
-                                .clickable {
-                                    // Cycle to next video theme
-                                    val themes = BackgroundVideoData.themes
-                                    val currentIndex = themes.indexOfFirst { it.id == state.selectedVideoThemeId }
-                                    val nextTheme = themes[(currentIndex + 1).coerceAtLeast(0) % themes.size]
-                                    onSelectVideoTheme?.invoke(nextTheme.id)
-                                }
-                                .padding(8.dp)
-                                .testTag("player_video_cycle_button")
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.Shuffle,
-                                contentDescription = "ভিডিও পরিবর্তন (Change Video)",
+                                contentDescription = "Next Surah",
                                 tint = Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
-                            Text(
-                                text = "ভিডিও বদল",
-                                color = Color.White,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
-                            )
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(4.dp))
-            } else {
-                // --- FULL DETAILS MODE (EXPANDED) ---
-                Spacer(modifier = Modifier.height(6.dp))
-
-                // CENTER COVER / MEDALLION ART WITH QARI PORTRAIT
-                Box(
-                    modifier = Modifier
-                        .size(200.dp)
-                        .clip(CircleShape)
-                        .background(
-                            Brush.radialGradient(
-                                listOf(
-                                    Color(0xFF3B2E15),
-                                    Color(0xFF14151D)
-                                )
-                            )
-                        )
-                        .border(2.5.dp, GoldPrimary.copy(alpha = 0.7f), CircleShape)
-                        .clickable { onOpenReciterSwitcher() }
-                        .padding(8.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .rotate(if (state.isPlaying) rotation else 0f)
-                            .border(1.5.dp, GoldPrimary.copy(alpha = 0.35f), CircleShape)
-                    )
-
-                    Box(
-                        modifier = Modifier
-                            .size(150.dp)
-                            .clip(CircleShape)
-                            .border(2.dp, GoldPrimary, CircleShape)
-                    ) {
-                        ReciterAvatar(
-                            reciter = state.currentReciter,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .padding(bottom = 4.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xEE090A0E))
-                            .border(1.dp, GoldPrimary, RoundedCornerShape(12.dp))
-                            .padding(horizontal = 8.dp, vertical = 2.dp)
-                    ) {
-                        Text(
-                            text = "${state.currentSurah.nameArabic} • ${state.currentSurah.number}",
-                            color = GoldPrimary,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // TITLES & RECITER
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = state.currentSurah.nameEnglish,
-                        color = TextPrimary,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Text(
-                        text = state.currentSurah.nameTranslation,
-                        color = TextSecondary,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center
-                    )
-
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    // Qari Switcher Pill
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(Color(0x551A1C28))
-                            .border(1.2.dp, GoldPrimary.copy(alpha = 0.7f), RoundedCornerShape(20.dp))
-                            .clickable { onOpenReciterSwitcher() }
-                            .padding(horizontal = 12.dp, vertical = 5.dp)
-                            .testTag("player_reciter_pill")
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            ReciterAvatar(
-                                reciter = state.currentReciter,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(
-                                text = state.currentReciter.name,
-                                color = GoldPrimary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "• Change Qari ▾",
-                                color = TextSecondary,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // SEEK BAR & TIMESTAMPS
-                Column(modifier = Modifier.fillMaxWidth()) {
-                    Slider(
-                        value = currentSliderValue.coerceIn(0f, maxDuration),
-                        onValueChange = {
-                            isDraggingSlider = true
-                            dragSliderPosition = it.coerceIn(0f, maxDuration)
-                        },
-                        onValueChangeFinished = {
-                            isDraggingSlider = false
-                            onSeekTo(dragSliderPosition.toLong())
-                        },
-                        valueRange = 0f..maxDuration,
-                        colors = SliderDefaults.colors(
-                            thumbColor = GoldPrimary,
-                            activeTrackColor = GoldPrimary,
-                            inactiveTrackColor = Color(0x33FFFFFF)
-                        ),
+                    // 4. SECONDARY DOCK ACCESSORIES ROW (Volume, Speed, Mushaf, Queue, Sleep)
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .testTag("player_seek_slider")
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                            .padding(top = 2.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        val currentPos = if (isDraggingSlider) dragSliderPosition.toLong() else state.currentPositionMs
-                        Text(
-                            text = formatTimeMs(currentPos),
-                            color = TextSecondary,
-                            fontSize = 12.sp
-                        )
-                        val remainingMs = (state.durationMs - currentPos).coerceAtLeast(0L)
-                        Text(
-                            text = "-${formatTimeMs(remainingMs)}",
-                            color = TextSecondary,
-                            fontSize = 12.sp
-                        )
-                    }
-                }
-
-                // MAIN PLAYBACK CONTROLS ROW
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = onPrevious,
-                        modifier = Modifier
-                            .size(42.dp)
-                            .testTag("player_previous_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.SkipPrevious,
-                            contentDescription = "Previous Surah",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onSkip15Backward,
-                        modifier = Modifier
-                            .size(42.dp)
-                            .testTag("player_skip_backward_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FastRewind,
-                            contentDescription = "Rewind 15 seconds",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(68.dp)
-                            .clip(CircleShape)
-                            .background(
-                                Brush.radialGradient(
-                                    listOf(GoldPrimary, Color(0xFFD49E24))
+                        // Volume / Mute Toggle Pill
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(if (state.isMuted) Color.White else Color(0x33FFFFFF))
+                                .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape(16.dp))
+                                .clickable { onToggleMute() }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .testTag("player_volume_button")
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = if (state.isMuted) Icons.Filled.VolumeMute else Icons.Filled.VolumeUp,
+                                    contentDescription = "Audio Volume",
+                                    tint = if (state.isMuted) Color.Black else Color.White,
+                                    modifier = Modifier.size(15.dp)
                                 )
-                            )
-                            .clickable { onTogglePlay() }
-                            .testTag("player_play_pause_button"),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (state.isBuffering) {
-                            CircularProgressIndicator(
-                                color = Color(0xFF090A0E),
-                                strokeWidth = 3.dp,
-                                modifier = Modifier.size(34.dp)
-                            )
-                        } else {
-                            Icon(
-                                imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                                contentDescription = if (state.isPlaying) "Pause" else "Play",
-                                tint = Color(0xFF090A0E),
-                                modifier = Modifier.size(36.dp)
+                                Text(
+                                    text = if (state.isMuted) "Muted" else "100%",
+                                    color = if (state.isMuted) Color.Black else Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+
+                        // Playback Speed Pill
+                        val speeds = listOf(0.75f, 1.0f, 1.25f, 1.5f)
+                        val currentSpeedIndex = speeds.indexOf(state.playbackSpeed).let { if (it == -1) 1 else it }
+                        val nextSpeed = speeds[(currentSpeedIndex + 1) % speeds.size]
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0x33FFFFFF))
+                                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(16.dp))
+                                .clickable { onChangeSpeed(nextSpeed) }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .testTag("player_speed_pill")
+                        ) {
+                            Text(
+                                text = "${state.playbackSpeed}x",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
                             )
                         }
-                    }
 
-                    IconButton(
-                        onClick = onSkip15Forward,
-                        modifier = Modifier
-                            .size(42.dp)
-                            .testTag("player_skip_forward_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.FastForward,
-                            contentDescription = "Forward 15 seconds",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+                        // Sleep Timer Pill
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(if (state.sleepTimerMinutes != null) Color.White.copy(alpha = 0.35f) else Color(0x33FFFFFF))
+                                .border(
+                                    1.dp,
+                                    if (state.sleepTimerMinutes != null) Color.White else Color(0x33FFFFFF),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .clickable { onOpenSleepTimer() }
+                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .testTag("player_sleep_timer_button")
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Nightlight,
+                                    contentDescription = "Sleep Timer",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                                Text(
+                                    text = if (state.sleepTimerSecondsRemaining != null) {
+                                        "%02d:%02d".format(
+                                            state.sleepTimerSecondsRemaining / 60,
+                                            state.sleepTimerSecondsRemaining % 60
+                                        )
+                                    } else {
+                                        "Sleep"
+                                    },
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
 
-                    IconButton(
-                        onClick = onNext,
-                        modifier = Modifier
-                            .size(42.dp)
-                            .testTag("player_next_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.SkipNext,
-                            contentDescription = "Next Surah",
-                            tint = TextPrimary,
-                            modifier = Modifier.size(28.dp)
-                        )
-                    }
-                }
-
-                // SECONDARY CONTROLS (Speed & Sleep timer)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val speeds = listOf(0.75f, 1.0f, 1.25f, 1.5f)
-                    val currentSpeedIndex = speeds.indexOf(state.playbackSpeed).let { if (it == -1) 1 else it }
-                    val nextSpeed = speeds[(currentSpeedIndex + 1) % speeds.size]
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0x33FFFFFF))
-                            .clickable { onChangeSpeed(nextSpeed) }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                            .testTag("player_speed_pill")
-                    ) {
-                        Text(
-                            text = "${state.playbackSpeed}x",
-                            color = GoldPrimary,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(if (state.sleepTimerMinutes != null) GoldPrimary.copy(alpha = 0.2f) else Color(0x33FFFFFF))
-                            .border(
-                                1.dp,
-                                if (state.sleepTimerMinutes != null) GoldPrimary else Color.Transparent,
-                                RoundedCornerShape(12.dp)
-                            )
-                            .clickable { onOpenSleepTimer() }
-                            .padding(horizontal = 12.dp, vertical = 6.dp)
-                            .testTag("player_sleep_timer_button")
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        // Mushaf Text Button
+                        IconButton(
+                            onClick = onOpenMushafSheet,
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x33FFFFFF))
+                                .testTag("player_mushaf_button")
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Nightlight,
-                                contentDescription = "Sleep Timer",
-                                tint = if (state.sleepTimerMinutes != null) GoldPrimary else TextSecondary,
-                                modifier = Modifier.size(16.dp)
-                            )
-                            Text(
-                                text = if (state.sleepTimerSecondsRemaining != null) {
-                                    "%02d:%02d".format(
-                                        state.sleepTimerSecondsRemaining / 60,
-                                        state.sleepTimerSecondsRemaining % 60
-                                    )
-                                } else if (state.sleepTimerMinutes == -1) {
-                                    "End of Surah"
-                                } else {
-                                    "Sleep Timer"
-                                },
-                                color = if (state.sleepTimerMinutes != null) GoldPrimary else TextSecondary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                                imageVector = Icons.Filled.MenuBook,
+                                contentDescription = "Mushaf Scripture Text",
+                                tint = Color.White,
+                                modifier = Modifier.size(17.dp)
                             )
                         }
-                    }
-                }
 
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // BOTTOM SHEET SHORTCUTS (Volume, Mushaf, Cast, Queue)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(
-                        onClick = { onToggleMute() },
-                        modifier = Modifier.testTag("player_volume_button")
-                    ) {
-                        Icon(
-                            imageVector = if (state.isMuted) Icons.Filled.VolumeMute else Icons.Filled.VolumeUp,
-                            contentDescription = "Volume",
-                            tint = if (state.isMuted) GoldPrimary else TextSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onOpenMushafSheet,
-                        modifier = Modifier.testTag("player_mushaf_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.MenuBook,
-                            contentDescription = "Mushaf Scripture Text",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Ready to stream via Cast & AirPlay")
-                            }
-                        },
-                        modifier = Modifier.testTag("player_cast_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Cast,
-                            contentDescription = "Cast",
-                            tint = TextSecondary,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    IconButton(
-                        onClick = onOpenQueueSheet,
-                        modifier = Modifier.testTag("player_queue_button")
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.QueueMusic,
-                            contentDescription = "Surah Queue",
-                            tint = GoldPrimary,
-                            modifier = Modifier.size(24.dp)
-                        )
+                        // Queue Button
+                        IconButton(
+                            onClick = onOpenQueueSheet,
+                            modifier = Modifier
+                                .size(34.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x33FFFFFF))
+                                .testTag("player_queue_button")
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.QueueMusic,
+                                contentDescription = "Surah Queue",
+                                tint = Color.White,
+                                modifier = Modifier.size(17.dp)
+                            )
+                        }
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(4.dp))
         }
 
         // Floating Snackbar
@@ -881,7 +640,7 @@ fun FullScreenPlayer(
             hostState = snackbarHostState,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
-                .padding(bottom = 80.dp)
+                .padding(bottom = 90.dp)
         )
     }
 }

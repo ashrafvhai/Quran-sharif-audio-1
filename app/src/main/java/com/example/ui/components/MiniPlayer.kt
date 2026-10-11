@@ -20,6 +20,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -36,8 +36,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.player.PlayerUiState
-import com.example.ui.theme.GoldPrimary
-import com.example.ui.theme.SurfaceCardBorder
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 
@@ -57,9 +55,9 @@ fun MiniPlayer(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(18.dp))
-            .background(Color(0x40161616))
-            .border(1.2.dp, Color(0x33FFFFFF), RoundedCornerShape(18.dp))
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color(0xD9101014))
+            .border(1.2.dp, Color(0x40FFFFFF), RoundedCornerShape(20.dp))
             .clickable { onExpand() }
             .testTag("mini_player")
     ) {
@@ -79,7 +77,7 @@ fun MiniPlayer(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .border(1.5.dp, GoldPrimary, CircleShape)
+                            .border(1.5.dp, Color.White, CircleShape)
                     ) {
                         ReciterAvatar(
                             reciter = state.currentReciter,
@@ -93,13 +91,13 @@ fun MiniPlayer(
                             .align(Alignment.BottomEnd)
                             .size(18.dp)
                             .clip(CircleShape)
-                            .background(GoldPrimary)
-                            .border(1.dp, Color(0xFF090A0E), CircleShape),
+                            .background(Color.White)
+                            .border(1.dp, Color.Black, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "${state.currentSurah.number}",
-                            color = Color(0xFF090A0E),
+                            color = Color.Black,
                             fontWeight = FontWeight.Bold,
                             fontSize = 9.sp
                         )
@@ -120,14 +118,14 @@ fun MiniPlayer(
                         Text(
                             text = state.currentSurah.nameEnglish,
                             color = TextPrimary,
-                            fontWeight = FontWeight.SemiBold,
+                            fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = state.currentSurah.nameArabic,
-                            color = GoldPrimary,
+                            color = Color.White.copy(alpha = 0.9f),
                             fontWeight = FontWeight.Normal,
                             fontSize = 13.sp
                         )
@@ -145,48 +143,49 @@ fun MiniPlayer(
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f, fill = false)
                         )
-                        if (state.ambientSound.id != "none") {
-                            Text(
-                                text = "• ${state.ambientSound.emoji} ${state.ambientSound.name}",
-                                color = GoldPrimary.copy(alpha = 0.85f),
-                                fontSize = 11.sp,
-                                maxLines = 1
-                            )
-                        }
                     }
                 }
 
-                // Controls
+                // Controls: Clean White circular Play/Stop Button
                 if (state.isBuffering) {
                     CircularProgressIndicator(
                         modifier = Modifier
                             .size(36.dp)
                             .padding(6.dp),
-                        color = GoldPrimary,
+                        color = Color.White,
                         strokeWidth = 2.5.dp
                     )
                 } else {
-                    IconButton(
-                        onClick = onTogglePlay,
-                        modifier = Modifier.testTag("mini_player_play_pause")
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(Color.White)
+                            .clickable { onTogglePlay() }
+                            .testTag("mini_player_play_pause"),
+                        contentAlignment = Alignment.Center
                     ) {
                         Icon(
-                            imageVector = if (state.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                            contentDescription = if (state.isPlaying) "Pause" else "Play",
-                            tint = GoldPrimary,
-                            modifier = Modifier.size(28.dp)
+                            imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                            contentDescription = if (state.isPlaying) "Stop" else "Play",
+                            tint = Color.Black,
+                            modifier = Modifier.size(22.dp)
                         )
                     }
                 }
 
+                Spacer(modifier = Modifier.width(6.dp))
+
                 IconButton(
                     onClick = onNext,
-                    modifier = Modifier.testTag("mini_player_next")
+                    modifier = Modifier
+                        .size(36.dp)
+                        .testTag("mini_player_next")
                 ) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Next Surah",
-                        tint = TextPrimary.copy(alpha = 0.8f),
+                        tint = Color.White,
                         modifier = Modifier.size(24.dp)
                     )
                 }
@@ -203,7 +202,7 @@ fun MiniPlayer(
                     modifier = Modifier
                         .fillMaxWidth(fraction = progress)
                         .height(2.5.dp)
-                        .background(GoldPrimary)
+                        .background(Color.White)
                 )
             }
         }

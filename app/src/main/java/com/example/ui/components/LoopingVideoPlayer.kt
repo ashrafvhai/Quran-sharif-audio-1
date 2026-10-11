@@ -1,238 +1,201 @@
 package com.example.ui.components
 
-import android.content.Context
-import android.graphics.SurfaceTexture
-import android.media.MediaPlayer
-import android.net.Uri
-import android.view.Surface
-import android.view.TextureView
-import android.view.ViewGroup
-import android.widget.FrameLayout
-import androidx.annotation.RawRes
+import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.viewinterop.AndroidView
 import com.example.R
 import com.example.data.model.AmbientSound
 import kotlinx.coroutines.delay
 
-data class BackgroundVideoTheme(
+data class BackgroundTheme(
     val id: String,
     val name: String,
-    val banglaName: String,
+    val description: String,
     val emoji: String,
-    @RawRes val rawResIds: List<Int>
+    @DrawableRes val drawableResId: Int
 )
 
 object BackgroundVideoData {
-    val allVideoResIds: List<Int> = listOf(
-        R.raw.video_waves,
-        R.raw.video_rain,
-        R.raw.video_sky,
-        R.raw.video_stars,
-        R.raw.video_sunset,
-        R.raw.video_aurora,
-        R.raw.video_forest,
-        R.raw.video_moon,
-        R.raw.video_river,
-        R.raw.video_galaxy,
-        R.raw.video_desert,
-        R.raw.video_lake,
-        R.raw.video_waterfall,
-        R.raw.video_dawn,
-        R.raw.video_twilight,
-        R.raw.video_sakura,
-        R.raw.video_breeze,
-        R.raw.video_clouds_timelapse,
-        R.raw.video_crystal_waters,
-        R.raw.video_candle
-    )
-
-    val themes: List<BackgroundVideoTheme> = listOf(
-        BackgroundVideoTheme(
+    val themes: List<BackgroundTheme> = listOf(
+        BackgroundTheme(
             id = "auto_mix",
             name = "Auto Mix (10s Cycle)",
-            banglaName = "মিক্সিং বাগ্রাউণ্ড (১০ সে.)",
+            description = "Cycles through all 20 serene scenes every 10 seconds",
             emoji = "🔀",
-            rawResIds = allVideoResIds
+            drawableResId = R.drawable.bg_waves
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "waves",
             name = "Ocean Waves",
-            banglaName = "সমুদ্রের শান্ত ঢেউ",
+            description = "Tranquil blue rolling sea waves",
             emoji = "🌊",
-            rawResIds = listOf(R.raw.video_waves)
+            drawableResId = R.drawable.bg_waves
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "rain",
             name = "Rain Drops",
-            banglaName = "বৃষ্টির স্নিগ্ধ ধারা",
+            description = "Soothing raindrops on clear glass",
             emoji = "🌧️",
-            rawResIds = listOf(R.raw.video_rain)
+            drawableResId = R.drawable.bg_rain
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "sky",
-            name = "Clouds & Sky",
-            banglaName = "নীল আকাশ ও মেঘ",
+            name = "Azure Sky",
+            description = "Peaceful clear clouds and open sky",
             emoji = "☁️",
-            rawResIds = listOf(R.raw.video_sky)
+            drawableResId = R.drawable.bg_sky
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "stars",
             name = "Night Sky & Stars",
-            banglaName = "তারাময় শান্ত রাত",
+            description = "Starlit calm celestial night sky",
             emoji = "✨",
-            rawResIds = listOf(R.raw.video_stars)
+            drawableResId = R.drawable.bg_stars
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "sunset",
             name = "Golden Sunset",
-            banglaName = "সূর্যাস্তের শান্তিময় আভা",
+            description = "Warm serene amber evening glow",
             emoji = "🌅",
-            rawResIds = listOf(R.raw.video_sunset)
+            drawableResId = R.drawable.bg_sunset
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "aurora",
             name = "Cosmic Aurora",
-            banglaName = "অরোরার মোহনীয় আলো",
+            description = "Ethereal northern polar lights",
             emoji = "🌌",
-            rawResIds = listOf(R.raw.video_aurora)
+            drawableResId = R.drawable.bg_aurora
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "forest",
             name = "Emerald Forest",
-            banglaName = "সবুজ স্নিগ্ধ অরণ্য",
+            description = "Peaceful deep green woodland",
             emoji = "🌲",
-            rawResIds = listOf(R.raw.video_forest)
+            drawableResId = R.drawable.bg_forest
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "moon",
             name = "Crescent Moon",
-            banglaName = "চাঁদের স্নিগ্ধ আলো",
+            description = "Silver nocturnal crescent moon",
             emoji = "🌙",
-            rawResIds = listOf(R.raw.video_moon)
+            drawableResId = R.drawable.bg_moon
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "river",
             name = "Mountain River",
-            banglaName = "পাহাড়ি শান্ত নদী",
+            description = "Serene crystal mountain brook",
             emoji = "🏞️",
-            rawResIds = listOf(R.raw.video_river)
+            drawableResId = R.drawable.bg_river
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "galaxy",
             name = "Deep Galaxy",
-            banglaName = "মহাজাগতিক গ্যালাক্সি",
+            description = "Mystical cosmic starry spiral",
             emoji = "🪐",
-            rawResIds = listOf(R.raw.video_galaxy)
+            drawableResId = R.drawable.bg_galaxy
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "desert",
             name = "Desert Dunes",
-            banglaName = "মরুভূমির শান্ত বেলা",
+            description = "Quiet warm rolling sand waves",
             emoji = "🏜️",
-            rawResIds = listOf(R.raw.video_desert)
+            drawableResId = R.drawable.bg_desert
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "lake",
             name = "Alpine Lake",
-            banglaName = "পাহাড়ের শান্ত হ্রদ",
+            description = "Still and reflective mountain lake",
             emoji = "⛵",
-            rawResIds = listOf(R.raw.video_lake)
+            drawableResId = R.drawable.bg_lake
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "waterfall",
             name = "Misty Waterfall",
-            banglaName = "ঝরনার শীতল জলধারা",
+            description = "Gentle cascading crystal waters",
             emoji = "💧",
-            rawResIds = listOf(R.raw.video_waterfall)
+            drawableResId = R.drawable.bg_waterfall
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "dawn",
             name = "Serene Dawn",
-            banglaName = "ভোরের স্নিগ্ধ আলো",
+            description = "Fresh quiet morning horizon",
             emoji = "🌄",
-            rawResIds = listOf(R.raw.video_dawn)
+            drawableResId = R.drawable.bg_dawn
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "twilight",
             name = "Peaceful Twilight",
-            banglaName = "গোধূলির শান্ত আকাশ",
+            description = "Soft purple evening dusk",
             emoji = "🌆",
-            rawResIds = listOf(R.raw.video_twilight)
+            drawableResId = R.drawable.bg_twilight
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "sakura",
             name = "Blossom Petals",
-            banglaName = "ঝরে পড়া ফুলের পাপড়ি",
+            description = "Gentle spring flora and petals",
             emoji = "🌸",
-            rawResIds = listOf(R.raw.video_sakura)
+            drawableResId = R.drawable.bg_sakura
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "breeze",
             name = "Mountain Breeze",
-            banglaName = "স্নিগ্ধ পাহাড়ি বাতাস",
+            description = "High altitude fresh clean breeze",
             emoji = "🍃",
-            rawResIds = listOf(R.raw.video_breeze)
+            drawableResId = R.drawable.bg_breeze
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "clouds_timelapse",
             name = "Clouds Flow",
-            banglaName = "মেঘের দূরন্ত প্রবাহ",
+            description = "Dreamy majestic floating clouds",
             emoji = "⛅",
-            rawResIds = listOf(R.raw.video_clouds_timelapse)
+            drawableResId = R.drawable.bg_clouds_timelapse
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "crystal_waters",
             name = "Crystal Waters",
-            banglaName = "স্বচ্ছ কাঁচের মতো জল",
+            description = "Pure shimmering transparent spring",
             emoji = "🫧",
-            rawResIds = listOf(R.raw.video_crystal_waters)
+            drawableResId = R.drawable.bg_crystal_waters
         ),
-        BackgroundVideoTheme(
+        BackgroundTheme(
             id = "candle",
             name = "Spiritual Glow",
-            banglaName = "শান্তিময় উজ্জ্বল আলো",
+            description = "Warm comforting radiant sanctuary light",
             emoji = "🕯️",
-            rawResIds = listOf(R.raw.video_candle)
+            drawableResId = R.drawable.bg_candle
         )
     )
 
-    fun getThemeById(id: String): BackgroundVideoTheme {
+    // The 20 individual theme drawables (excluding auto_mix which cycles them)
+    val individualThemes: List<BackgroundTheme> = themes.filter { it.id != "auto_mix" }
+
+    fun getThemeById(id: String): BackgroundTheme {
         return themes.find { it.id == id } ?: themes.first()
     }
 }
 
 /**
- * Fullscreen silent, looping 20-video background with support for:
- * 1. "মিক্সিং বাগ্রাউণ্ড" (Auto Mix Videos - sequential automatic transition every 10 seconds)
- * 2. Dedicated single serene video loops
- * 3. 100% Guaranteed silence on video channel so recitation is crystal clear
- * 4. Cinematic Ken Burns and smooth crossfades
+ * Clean, serene background scene display.
+ * As requested by the user:
+ * - Background videos stay as static still images without moving/jitter ("কোনো নাড়াচাড়া না করে")
+ * - If Auto Mix is selected, the background smoothly cycles through the 20 scenes every 10 seconds
+ * - 100% in English
+ * - Crisp colored backdrop that lets reciter portraits and recitation audio shine
  */
 @Composable
 fun AmbientVideoBackground(
@@ -240,213 +203,64 @@ fun AmbientVideoBackground(
     isPlaying: Boolean,
     modifier: Modifier = Modifier,
     videoThemeId: String = "auto_mix",
-    autoSwitchIntervalSeconds: Int = 10 // Exactly 10 seconds as requested by the user
+    autoSwitchIntervalSeconds: Int = 10
 ) {
-    val context = LocalContext.current
-    val theme = remember(videoThemeId) { BackgroundVideoData.getThemeById(videoThemeId) }
-    var currentVideoIndex by remember(videoThemeId) { mutableIntStateOf(0) }
-    var isVideoReady by remember { mutableStateOf(false) }
+    val allScenes = BackgroundVideoData.individualThemes
+    var currentCycleIndex by remember { mutableIntStateOf(0) }
 
-    // If Auto Mix (মিক্সিং বাগ্রাউণ্ড), cycle to the next video automatically every 10 seconds
+    // If Auto Mix is selected and playing, advance scene every 10 seconds
     LaunchedEffect(videoThemeId, isPlaying) {
-        if (theme.rawResIds.size > 1) {
+        if (videoThemeId == "auto_mix" && allScenes.isNotEmpty()) {
             while (true) {
                 delay(autoSwitchIntervalSeconds * 1000L)
                 if (isPlaying) {
-                    currentVideoIndex = (currentVideoIndex + 1) % theme.rawResIds.size
+                    currentCycleIndex = (currentCycleIndex + 1) % allScenes.size
                 }
             }
         }
     }
 
-    val currentRawRes = remember(theme, currentVideoIndex) {
-        if (theme.rawResIds.isNotEmpty()) {
-            theme.rawResIds[currentVideoIndex.coerceIn(0, theme.rawResIds.lastIndex)]
+    val currentTheme = remember(videoThemeId, currentCycleIndex) {
+        if (videoThemeId == "auto_mix") {
+            allScenes[currentCycleIndex.coerceIn(0, allScenes.lastIndex)]
         } else {
-            R.raw.video_waves
+            BackgroundVideoData.getThemeById(videoThemeId)
         }
     }
-
-    // Gentle Ken Burns subtle zoom animation
-    val infiniteTransition = rememberInfiniteTransition(label = "ken_burns")
-    val scaleAnim by infiniteTransition.animateFloat(
-        initialValue = 1.0f,
-        targetValue = 1.05f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 10000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "ken_burns_scale"
-    )
 
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF000000))
+            .background(Color.Black)
     ) {
-        // 1. Silent, Muted Looping Video via TextureView & MediaPlayer
+        // High quality static image background with smooth crossfade
         Crossfade(
-            targetState = currentRawRes,
+            targetState = currentTheme.drawableResId,
             animationSpec = tween(durationMillis = 800),
-            label = "video_res_crossfade"
-        ) { rawRes ->
-            SilentTextureVideoPlayer(
-                context = context,
-                rawResId = rawRes,
-                isPlaying = isPlaying,
-                onVideoEnded = {
-                    if (theme.rawResIds.size > 1) {
-                        currentVideoIndex = (currentVideoIndex + 1) % theme.rawResIds.size
-                    }
-                },
-                onPrepared = { isVideoReady = true },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scale(scaleAnim)
-            )
-        }
-
-        // 2. High-quality graceful fallback layer
-        if (!isVideoReady) {
-            val fallbackDrawable = when {
-                ambient.backgroundDrawableRes != null -> ambient.backgroundDrawableRes
-                currentRawRes == R.raw.video_rain -> R.drawable.img_nature_rain
-                else -> R.drawable.img_nature_waves
-            }
-
+            label = "scene_crossfade"
+        ) { resId ->
             Image(
-                painter = painterResource(id = fallbackDrawable),
-                contentDescription = ambient.name,
+                painter = painterResource(id = resId),
+                contentDescription = currentTheme.name,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .scale(scaleAnim)
+                modifier = Modifier.fillMaxSize()
             )
         }
 
-        // 3. Clean Cinematic Minimalist Frosted Glass Gradient Overlays
+        // Minimalist Frosted Glass Dark Gradient Overlays to keep text ultra-readable
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color.Black.copy(alpha = 0.40f),
+                            Color.Black.copy(alpha = 0.45f),
                             Color.Transparent,
-                            Color.Black.copy(alpha = 0.30f),
-                            Color.Black.copy(alpha = 0.70f)
+                            Color.Black.copy(alpha = 0.35f),
+                            Color.Black.copy(alpha = 0.75f)
                         )
                     )
                 )
         )
-    }
-}
-
-/**
- * Direct TextureView implementation that guarantees ZERO audio focus consumption
- * and 100% silent video frame decoding.
- */
-@Composable
-private fun SilentTextureVideoPlayer(
-    context: Context,
-    @RawRes rawResId: Int,
-    isPlaying: Boolean,
-    onVideoEnded: () -> Unit,
-    onPrepared: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var playerRef by remember { mutableStateOf<MediaPlayer?>(null) }
-    var surfaceRef by remember { mutableStateOf<Surface?>(null) }
-
-    AndroidView(
-        factory = { ctx ->
-            TextureView(ctx).apply {
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-
-                surfaceTextureListener = object : TextureView.SurfaceTextureListener {
-                    override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
-                        val surface = Surface(surfaceTexture)
-                        surfaceRef = surface
-
-                        try {
-                            val uri = Uri.parse("android.resource://${ctx.packageName}/$rawResId")
-                            val player = MediaPlayer().apply {
-                                setSurface(surface)
-                                setDataSource(ctx, uri)
-                                // CRITICAL: Absolutely zero audio volume to ensure recitation is crystal clear
-                                setVolume(0f, 0f)
-                                isLooping = false
-
-                                setOnPreparedListener { mp ->
-                                    onPrepared()
-                                    try {
-                                        mp.start()
-                                    } catch (_: Exception) {}
-                                }
-
-                                setOnCompletionListener { mp ->
-                                    onVideoEnded()
-                                    try {
-                                        mp.seekTo(0)
-                                        mp.start()
-                                    } catch (_: Exception) {}
-                                }
-
-                                setOnErrorListener { _, _, _ ->
-                                    true
-                                }
-
-                                prepareAsync()
-                            }
-                            playerRef = player
-                        } catch (e: Exception) {
-                            android.util.Log.w("SilentVideoPlayer", "Error preparing raw video: ${e.message}")
-                        }
-                    }
-
-                    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
-
-                    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                        try {
-                            playerRef?.stop()
-                            playerRef?.release()
-                            playerRef = null
-                            surfaceRef?.release()
-                            surfaceRef = null
-                        } catch (_: Exception) {}
-                        return true
-                    }
-
-                    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) {}
-                }
-            }
-        },
-        update = {
-            playerRef?.let { player ->
-                try {
-                    if (isPlaying) {
-                        if (!player.isPlaying) player.start()
-                    } else {
-                        if (player.isPlaying) player.pause()
-                    }
-                } catch (_: Exception) {}
-            }
-        },
-        modifier = modifier
-    )
-
-    DisposableEffect(rawResId) {
-        onDispose {
-            try {
-                playerRef?.stop()
-                playerRef?.release()
-                playerRef = null
-                surfaceRef?.release()
-                surfaceRef = null
-            } catch (_: Exception) {}
-        }
     }
 }

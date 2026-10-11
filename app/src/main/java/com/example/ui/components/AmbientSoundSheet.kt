@@ -22,7 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Videocam
+import androidx.compose.material.icons.filled.Wallpaper
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -75,7 +75,7 @@ fun AmbientSoundSheet(
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    var selectedTab by remember { mutableIntStateOf(0) } // 0: Video Themes & Mixing, 1: Nature Audio
+    var selectedTab by remember { mutableIntStateOf(0) } // 0: Background Scenes, 1: Nature Audio
     var searchQuery by remember { mutableStateOf("") }
 
     val filteredSounds = remember(searchQuery) {
@@ -91,7 +91,7 @@ fun AmbientSoundSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xF213141C),
+        containerColor = Color(0xF2101010),
         tonalElevation = 8.dp,
         dragHandle = {
             Box(
@@ -122,7 +122,7 @@ fun AmbientSoundSheet(
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "ভিডিও ব্যাকগ্রাউন্ড এবং শান্তিময় আবহ নির্বাচন করুন",
+                        text = "Choose serene background scene or ambient nature atmosphere",
                         color = TextMuted,
                         fontSize = 12.sp
                     )
@@ -142,7 +142,7 @@ fun AmbientSoundSheet(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Tab Switcher between "Background Videos" and "Ambient Sounds"
+            // Tab Switcher between "Background Scenes" and "Ambient Sounds"
             TabRow(
                 selectedTabIndex = selectedTab,
                 containerColor = Color(0x33000000),
@@ -166,13 +166,13 @@ fun AmbientSoundSheet(
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Videocam,
+                                imageVector = Icons.Filled.Wallpaper,
                                 contentDescription = null,
                                 modifier = Modifier.size(16.dp),
                                 tint = if (selectedTab == 0) GoldPrimary else TextSecondary
                             )
                             Text(
-                                text = "Background Videos",
+                                text = "Background Scenes (20)",
                                 fontWeight = if (selectedTab == 0) FontWeight.Bold else FontWeight.Normal,
                                 color = if (selectedTab == 0) GoldPrimary else TextSecondary
                             )
@@ -194,7 +194,7 @@ fun AmbientSoundSheet(
                                 tint = if (selectedTab == 1) GoldPrimary else TextSecondary
                             )
                             Text(
-                                text = "Ambient Sounds",
+                                text = "Ambient Nature Audio",
                                 fontWeight = if (selectedTab == 1) FontWeight.Bold else FontWeight.Normal,
                                 color = if (selectedTab == 1) GoldPrimary else TextSecondary
                             )
@@ -206,16 +206,16 @@ fun AmbientSoundSheet(
             Spacer(modifier = Modifier.height(14.dp))
 
             if (selectedTab == 0) {
-                // VIDEO BACKGROUNDS & MIXING (মিক্সিং বাগ্রাউণ্ড)
+                // BACKGROUND SCENES & AUTO MIX
                 Text(
-                    text = "ভিডিও মোড ও মিক্সিং পছন্দ করুন (100% নীরব ব্যাকগ্রাউন্ড):",
+                    text = "Select scene or enable Auto Mix cycle (100% silent backgrounds):",
                     color = TextSecondary,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.height(10.dp))
 
-                // Highlighted "মিক্সিং বাগ্রাউণ্ড" Auto Mix Banner Card
+                // Highlighted "Auto Mix" Banner Card
                 val autoMixTheme = BackgroundVideoData.themes.first { it.id == "auto_mix" }
                 val isAutoMixSelected = selectedVideoThemeId == autoMixTheme.id
 
@@ -272,7 +272,7 @@ fun AmbientSoundSheet(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
                                 Text(
-                                    text = autoMixTheme.banglaName, // মিক্সিং বাগ্রাউণ্ড (১০ সে.)
+                                    text = autoMixTheme.name,
                                     color = Color.White,
                                     fontSize = 15.sp,
                                     fontWeight = FontWeight.Bold
@@ -284,7 +284,7 @@ fun AmbientSoundSheet(
                                 )
                             }
                             Text(
-                                text = "২০টি শান্তিময় দৃশ্য প্রতি ১০ সেকেন্ডে স্বয়ংক্রিয়ভাবে পরিবর্তিত হবে",
+                                text = "Smoothly cycles through all 20 serene scenes every 10 seconds",
                                 color = TextMuted,
                                 fontSize = 12.sp
                             )
@@ -310,7 +310,7 @@ fun AmbientSoundSheet(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
-                // Grid of 20 video themes
+                // Grid of 20 background themes
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(3),
                     contentPadding = PaddingValues(bottom = 24.dp),
@@ -320,7 +320,7 @@ fun AmbientSoundSheet(
                         .fillMaxWidth()
                         .height(340.dp)
                 ) {
-                    items(BackgroundVideoData.themes.filter { it.id != "auto_mix" }, key = { it.id }) { vTheme ->
+                    items(BackgroundVideoData.individualThemes, key = { it.id }) { vTheme ->
                         val isSelected = vTheme.id == selectedVideoThemeId
                         Box(
                             modifier = Modifier
@@ -361,14 +361,14 @@ fun AmbientSoundSheet(
                                 Spacer(modifier = Modifier.height(6.dp))
                                 Text(
                                     text = vTheme.name,
-                                    color = if (isSelected) GoldPrimary else TextPrimary,
+                                    color = if (isSelected) Color.White else TextPrimary,
                                     fontSize = 12.sp,
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     textAlign = TextAlign.Center,
                                     maxLines = 1
                                 )
                                 Text(
-                                    text = vTheme.banglaName,
+                                    text = vTheme.description.split(" ").take(2).joinToString(" "),
                                     color = TextMuted,
                                     fontSize = 10.sp,
                                     textAlign = TextAlign.Center,
@@ -515,13 +515,13 @@ private fun AmbientSoundCard(
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
-    val borderColor = if (isSelected) GoldPrimary else SurfaceCardBorder
+    val borderColor = if (isSelected) Color.White else SurfaceCardBorder
     val bgModifier = if (isSelected) {
         Modifier.background(
             Brush.verticalGradient(
                 listOf(
-                    GoldPrimary.copy(alpha = 0.25f),
-                    Color(0xFF262015)
+                    Color(0x33FFFFFF),
+                    Color(0x1AFFFFFF)
                 )
             )
         )
@@ -548,7 +548,7 @@ private fun AmbientSoundCard(
                 modifier = Modifier
                     .size(46.dp)
                     .clip(CircleShape)
-                    .background(if (isSelected) GoldPrimary.copy(alpha = 0.25f) else Color(0x18FFFFFF)),
+                    .background(if (isSelected) Color.White else Color(0x18FFFFFF)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
@@ -561,7 +561,7 @@ private fun AmbientSoundCard(
 
             Text(
                 text = sound.name,
-                color = if (isSelected) GoldPrimary else TextPrimary,
+                color = if (isSelected) Color.White else TextPrimary,
                 fontSize = 12.sp,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                 textAlign = TextAlign.Center,

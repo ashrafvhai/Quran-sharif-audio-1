@@ -33,6 +33,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,12 +48,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ui.theme.AppCustomTheme
 import com.example.ui.theme.GoldPrimary
 import com.example.ui.theme.SurfaceCard
 import com.example.ui.theme.SurfaceCardBorder
 import com.example.ui.theme.TextMuted
 import com.example.ui.theme.TextPrimary
 import com.example.ui.theme.TextSecondary
+import com.example.ui.theme.ThemeManager
 import kotlinx.coroutines.launch
 
 @Composable
@@ -123,16 +126,84 @@ fun SettingsScreen(
                 }
             }
 
-            // APPEARANCE SECTION
+            // APPEARANCE & CUSTOM THEME SECTION
             item {
-                SettingsGroup(title = "Appearance") {
-                    SettingsSwitchRow(
-                        icon = Icons.Filled.DarkMode,
-                        title = "OLED Near-Black Theme",
-                        subtitle = "Pure dark mode with warm gold accents",
-                        checked = darkThemeOled,
-                        onCheckedChange = { darkThemeOled = it }
+                val currentTheme by ThemeManager.currentTheme.collectAsState()
+
+                SettingsGroup(title = "Appearance & Custom Theme") {
+                    Text(
+                        text = "Choose your preferred Glass UI theme. Pure Black & White is default:",
+                        color = TextSecondary,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
                     )
+
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        AppCustomTheme.entries.forEach { theme ->
+                            val isSelected = theme == currentTheme
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(if (isSelected) theme.primaryColor.copy(alpha = 0.2f) else Color(0x18FFFFFF))
+                                    .border(
+                                        if (isSelected) 1.8.dp else 1.dp,
+                                        if (isSelected) theme.primaryColor else Color(0x2BFFFFFF),
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .clickable {
+                                        ThemeManager.setTheme(theme)
+                                        coroutineScope.launch {
+                                            snackbarHostState.showSnackbar("Applied theme: ${theme.displayName}")
+                                        }
+                                    }
+                                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                                    .testTag("theme_option_${theme.id}")
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        Text(text = theme.emoji, fontSize = 20.sp)
+                                        Column {
+                                            Text(
+                                                text = theme.displayName,
+                                                color = Color.White,
+                                                fontSize = 14.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
+                                            )
+                                            Text(
+                                                text = theme.description,
+                                                color = TextMuted,
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+
+                                    if (isSelected) {
+                                        Box(
+                                            modifier = Modifier
+                                                .clip(RoundedCornerShape(6.dp))
+                                                .background(theme.primaryColor)
+                                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                                        ) {
+                                            Text(
+                                                text = "ACTIVE",
+                                                color = theme.surfaceBackground,
+                                                fontSize = 10.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

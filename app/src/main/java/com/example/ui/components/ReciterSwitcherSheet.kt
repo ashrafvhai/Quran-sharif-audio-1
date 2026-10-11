@@ -107,13 +107,13 @@ fun ReciterSwitcherSheet(
             ) {
                 Column {
                     Text(
-                        text = "Change Reciter / ক্বারী পরিবর্তন",
+                        text = "Change Reciter",
                         color = TextPrimary,
                         fontSize = 19.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = "Tap any Sheikh to instantly switch voice",
+                        text = "Choose any of the 10 Master Qaris to switch recitation voice",
                         color = TextMuted,
                         fontSize = 12.sp
                     )
@@ -139,7 +139,7 @@ fun ReciterSwitcherSheet(
                 onValueChange = { searchQuery = it },
                 placeholder = {
                     Text(
-                        text = "Search Qari / ক্বারীর নাম খুঁজুন...",
+                        text = "Search reciter by name...",
                         color = TextMuted,
                         fontSize = 14.sp
                     )

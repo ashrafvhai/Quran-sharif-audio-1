@@ -163,38 +163,68 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(horizontal = 4.dp)
                 ) {
                     items(ReciterData.reciters) { reciter ->
+                        val isSelected = reciter.id == playerState.currentReciter.id
+                        val shortDisplayName = when (reciter.id) {
+                            "afs" -> "Mishary Alafasy"
+                            "sudais" -> "As-Sudais"
+                            "shuraim" -> "Ash-Shuraim"
+                            "maher" -> "Al-Muaiqly"
+                            "basit" -> "Abdul Basit"
+                            "husary" -> "Al-Husary"
+                            "ghamdi" -> "Saad Al-Ghamdi"
+                            "dossary" -> "Al-Dossari"
+                            "ajmi" -> "Ahmad Al-Ajmy"
+                            "minshawi" -> "Al-Minshawi"
+                            else -> reciter.name
+                        }
+                        val roleTag = when (reciter.id) {
+                            "sudais", "shuraim", "maher", "dossary" -> "Haram Imam"
+                            "afs" -> "Kuwait"
+                            "basit", "husary", "minshawi" -> "Egypt"
+                            else -> "Saudi"
+                        }
+
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             modifier = Modifier
+                                .width(94.dp)
                                 .clickable { onSelectReciter(reciter) }
                                 .testTag("home_reciter_${reciter.id}")
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(68.dp)
+                                    .size(76.dp)
                                     .clip(CircleShape)
                                     .background(Color(0x1AFFFFFF))
                                     .border(
-                                        if (reciter.id == playerState.currentReciter.id) 2.dp else 1.2.dp,
-                                        if (reciter.id == playerState.currentReciter.id) Color.White else Color(0x33FFFFFF),
+                                        if (isSelected) 2.2.dp else 1.2.dp,
+                                        if (isSelected) Color.White else Color(0x33FFFFFF),
                                         CircleShape
                                     )
                             ) {
-                                // Reciter Avatar remains in vivid full color as requested
+                                // Reciter Avatar in rich color
                                 ReciterAvatar(
                                     reciter = reciter,
                                     modifier = Modifier.fillMaxSize()
                                 )
                             }
-                            Spacer(modifier = Modifier.height(6.dp))
+                            Spacer(modifier = Modifier.height(7.dp))
                             Text(
-                                text = reciter.name.split(" ").firstOrNull() ?: reciter.name,
-                                color = TextPrimary,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium,
+                                text = shortDisplayName,
+                                color = if (isSelected) Color.White else TextPrimary,
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center,
+                                maxLines = 1
+                            )
+                            Text(
+                                text = roleTag,
+                                color = TextMuted,
+                                fontSize = 11.sp,
                                 textAlign = TextAlign.Center
                             )
                         }
