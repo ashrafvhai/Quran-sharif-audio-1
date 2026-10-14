@@ -31,19 +31,19 @@ class ExampleRobolectricTest {
 
   @Test
   fun `reciters catalog is populated`() {
-    assertTrue(ReciterData.reciters.size >= 10)
+    assertEquals(10, ReciterData.reciters.size)
     val reciterNames = ReciterData.reciters.map { it.name }
     val expectedSheikhs = listOf(
-        "Abdul Basit Abdus-Samad",
-        "Muhammad Siddiq Al-Minshawi",
-        "Mahmoud Khalil Al-Husary",
-        "Mishary Rashid Alafasy",
-        "Maher Al-Muaiqly",
-        "Abdul Rahman Al-Sudais",
-        "Saad Al-Ghamdi",
-        "Abu Bakr Al-Shatri",
-        "Saud Al-Shuraim",
-        "Yasser Al-Dosari"
+        "Sheikh Mishary Rashid Alafasy",
+        "Sheikh Abdur-Rahman As-Sudais",
+        "Sheikh Saud Ash-Shuraim",
+        "Sheikh Maher Al-Muaiqly",
+        "Sheikh Abdul Basit Abdul Samad",
+        "Sheikh Mahmoud Khalil Al-Husary",
+        "Sheikh Saad Al-Ghamdi",
+        "Sheikh Yasser Al-Dossari",
+        "Sheikh Ahmad Al-Ajmy",
+        "Sheikh Muhammad Siddiq Al-Minshawi"
     )
     for (sheikh in expectedSheikhs) {
       assertTrue("Missing expected reciter $sheikh", reciterNames.contains(sheikh))

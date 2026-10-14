@@ -91,13 +91,13 @@ fun MiniPlayer(
                             .align(Alignment.BottomEnd)
                             .size(18.dp)
                             .clip(CircleShape)
-                            .background(Color.White)
-                            .border(1.dp, Color.Black, CircleShape),
+                            .background(Color(0xD9000000))
+                            .border(1.dp, Color(0x66FFFFFF), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             text = "${state.currentSurah.number}",
-                            color = Color.Black,
+                            color = Color.White,
                             fontWeight = FontWeight.Bold,
                             fontSize = 9.sp
                         )
@@ -156,20 +156,17 @@ fun MiniPlayer(
                         strokeWidth = 2.5.dp
                     )
                 } else {
-                    Box(
+                    IconButton(
+                        onClick = onTogglePlay,
                         modifier = Modifier
                             .size(38.dp)
-                            .clip(CircleShape)
-                            .background(Color.White)
-                            .clickable { onTogglePlay() }
-                            .testTag("mini_player_play_pause"),
-                        contentAlignment = Alignment.Center
+                            .testTag("mini_player_play_pause")
                     ) {
                         Icon(
                             imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
                             contentDescription = if (state.isPlaying) "Stop" else "Play",
-                            tint = Color.Black,
-                            modifier = Modifier.size(22.dp)
+                            tint = Color.White,
+                            modifier = Modifier.size(28.dp)
                         )
                     }
                 }

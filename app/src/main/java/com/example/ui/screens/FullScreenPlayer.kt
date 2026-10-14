@@ -148,8 +148,7 @@ fun FullScreenPlayer(
                     modifier = Modifier
                         .size(42.dp)
                         .clip(CircleShape)
-                        .background(Color(0x55000000))
-                        .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                        .background(Color(0x44000000))
                         .testTag("player_minimize_button")
                 ) {
                     Icon(
@@ -164,8 +163,7 @@ fun FullScreenPlayer(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(24.dp))
-                        .background(Color(0x66000000))
-                        .border(1.2.dp, Color(0x44FFFFFF), RoundedCornerShape(24.dp))
+                        .background(Color(0x44000000))
                         .clickable { onOpenAmbientSheet() }
                         .padding(horizontal = 14.dp, vertical = 8.dp)
                         .testTag("ambient_sound_pill")
@@ -209,8 +207,7 @@ fun FullScreenPlayer(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(Color(0x55000000))
-                            .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                            .background(Color(0x44000000))
                             .testTag("player_quick_theme_cycle")
                     ) {
                         Icon(
@@ -227,8 +224,7 @@ fun FullScreenPlayer(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(Color(0x55000000))
-                            .border(1.dp, Color(0x33FFFFFF), CircleShape)
+                            .background(Color(0x44000000))
                             .testTag("player_favorite_button")
                     ) {
                         Icon(
@@ -250,23 +246,16 @@ fun FullScreenPlayer(
             Spacer(modifier = Modifier.weight(1f))
 
             // ==========================================================
-            // BOTTOM CONTROL DOCK: Unified, Ultra-Smooth, Glass UI
-            // "কন্ট্রোল এর ঐটা সরিয়ে এটা লাগাও"
+            // BOTTOM CONTROLS: Clean floating buttons without black background container
+            // "কন্ট্রোল প্যানেল এর জাস্ট ব্যাটন গুলা থাকবে আর বাকি যেই কালো অংশটা বেনগ্রাউন্ট হিসেবে আছে ঐটা লাগবেনা"
             // ==========================================================
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(30.dp))
-                    .background(Color(0x88000000))
-                    .border(1.2.dp, Color(0x38FFFFFF), RoundedCornerShape(30.dp))
-                    .shadow(16.dp, RoundedCornerShape(30.dp))
-                    .padding(horizontal = 16.dp, vertical = 14.dp)
+                    .padding(horizontal = 4.dp, vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    // 1. TRACK & RECITER INFO ROW
+                // 1. TRACK & RECITER INFO ROW
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -382,10 +371,11 @@ fun FullScreenPlayer(
                     }
 
                     // 3. MAIN CONTROLS ROW: Prev, Rewind 15, Stop/Play, Forward 15, Next
+                    // Pure floating icons without any white background or container
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 2.dp),
+                            .padding(vertical = 4.dp),
                         horizontalArrangement = Arrangement.SpaceEvenly,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -393,16 +383,14 @@ fun FullScreenPlayer(
                         IconButton(
                             onClick = onPrevious,
                             modifier = Modifier
-                                .size(46.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x33FFFFFF))
+                                .size(48.dp)
                                 .testTag("player_previous_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.SkipPrevious,
                                 contentDescription = "Previous Surah",
                                 tint = Color.White,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(34.dp)
                             )
                         }
 
@@ -410,54 +398,37 @@ fun FullScreenPlayer(
                         IconButton(
                             onClick = onSkip15Backward,
                             modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x22FFFFFF))
+                                .size(48.dp)
                                 .testTag("player_skip_backward_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.FastRewind,
                                 contentDescription = "Rewind 15 seconds",
                                 tint = Color.White,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
 
-                        // Stop / Play Button - Pure White High Contrast Round Button
-                        Box(
+                        // Stop / Play Button - Pure Floating Icon without any white background circle
+                        IconButton(
+                            onClick = onTogglePlay,
                             modifier = Modifier
-                                .size(70.dp)
-                                .clip(CircleShape)
-                                .background(Color.White)
-                                .border(2.dp, Color.White, CircleShape)
-                                .clickable { onTogglePlay() }
-                                .testTag("player_play_pause_button"),
-                            contentAlignment = Alignment.Center
+                                .size(72.dp)
+                                .testTag("player_play_pause_button")
                         ) {
                             if (state.isBuffering) {
                                 CircularProgressIndicator(
-                                    color = Color.Black,
+                                    color = Color.White,
                                     strokeWidth = 3.dp,
-                                    modifier = Modifier.size(32.dp)
+                                    modifier = Modifier.size(36.dp)
                                 )
                             } else {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.Center
-                                ) {
-                                    Icon(
-                                        imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                                        contentDescription = if (state.isPlaying) "Stop Button" else "Play Button",
-                                        tint = Color.Black,
-                                        modifier = Modifier.size(32.dp)
-                                    )
-                                    Text(
-                                        text = if (state.isPlaying) "Stop" else "Play",
-                                        color = Color.Black,
-                                        fontSize = 10.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                                Icon(
+                                    imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
+                                    contentDescription = if (state.isPlaying) "Stop Button" else "Play Button",
+                                    tint = Color.White,
+                                    modifier = Modifier.size(54.dp)
+                                )
                             }
                         }
 
@@ -465,16 +436,14 @@ fun FullScreenPlayer(
                         IconButton(
                             onClick = onSkip15Forward,
                             modifier = Modifier
-                                .size(42.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x22FFFFFF))
+                                .size(48.dp)
                                 .testTag("player_skip_forward_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.FastForward,
                                 contentDescription = "Forward 15 seconds",
                                 tint = Color.White,
-                                modifier = Modifier.size(22.dp)
+                                modifier = Modifier.size(28.dp)
                             )
                         }
 
@@ -482,55 +451,49 @@ fun FullScreenPlayer(
                         IconButton(
                             onClick = onNext,
                             modifier = Modifier
-                                .size(46.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x33FFFFFF))
+                                .size(48.dp)
                                 .testTag("player_next_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.SkipNext,
                                 contentDescription = "Next Surah",
                                 tint = Color.White,
-                                modifier = Modifier.size(28.dp)
+                                modifier = Modifier.size(34.dp)
                             )
                         }
                     }
 
-                    // 4. SECONDARY DOCK ACCESSORIES ROW (Volume, Speed, Mushaf, Queue, Sleep)
+                    // 4. SECONDARY DOCK ACCESSORIES ROW (Volume, Speed, Sleep, Mushaf, Queue)
+                    // Pure floating indicators with NO white background
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 2.dp),
+                            .padding(top = 4.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Volume / Mute Toggle Pill
-                        Box(
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(if (state.isMuted) Color.White else Color(0x33FFFFFF))
-                                .border(1.dp, Color(0x44FFFFFF), RoundedCornerShape(16.dp))
                                 .clickable { onToggleMute() }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
                                 .testTag("player_volume_button")
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = if (state.isMuted) Icons.Filled.VolumeMute else Icons.Filled.VolumeUp,
-                                    contentDescription = "Audio Volume",
-                                    tint = if (state.isMuted) Color.Black else Color.White,
-                                    modifier = Modifier.size(15.dp)
-                                )
-                                Text(
-                                    text = if (state.isMuted) "Muted" else "100%",
-                                    color = if (state.isMuted) Color.Black else Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Icon(
+                                imageVector = if (state.isMuted) Icons.Filled.VolumeMute else Icons.Filled.VolumeUp,
+                                contentDescription = "Audio Volume",
+                                tint = Color.White,
+                                modifier = Modifier.size(17.dp)
+                            )
+                            Text(
+                                text = if (state.isMuted) "Muted" else "100%",
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
 
                         // Playback Speed Pill
@@ -541,10 +504,8 @@ fun FullScreenPlayer(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(Color(0x33FFFFFF))
-                                .border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(16.dp))
                                 .clickable { onChangeSpeed(nextSpeed) }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
                                 .testTag("player_speed_pill")
                         ) {
                             Text(
@@ -556,59 +517,48 @@ fun FullScreenPlayer(
                         }
 
                         // Sleep Timer Pill
-                        Box(
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
                             modifier = Modifier
                                 .clip(RoundedCornerShape(16.dp))
-                                .background(if (state.sleepTimerMinutes != null) Color.White.copy(alpha = 0.35f) else Color(0x33FFFFFF))
-                                .border(
-                                    1.dp,
-                                    if (state.sleepTimerMinutes != null) Color.White else Color(0x33FFFFFF),
-                                    RoundedCornerShape(16.dp)
-                                )
                                 .clickable { onOpenSleepTimer() }
-                                .padding(horizontal = 10.dp, vertical = 6.dp)
+                                .padding(horizontal = 8.dp, vertical = 6.dp)
                                 .testTag("player_sleep_timer_button")
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Nightlight,
-                                    contentDescription = "Sleep Timer",
-                                    tint = Color.White,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                                Text(
-                                    text = if (state.sleepTimerSecondsRemaining != null) {
-                                        "%02d:%02d".format(
-                                            state.sleepTimerSecondsRemaining / 60,
-                                            state.sleepTimerSecondsRemaining % 60
-                                        )
-                                    } else {
-                                        "Sleep"
-                                    },
-                                    color = Color.White,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Medium
-                                )
-                            }
+                            Icon(
+                                imageVector = Icons.Filled.Nightlight,
+                                contentDescription = "Sleep Timer",
+                                tint = Color.White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (state.sleepTimerSecondsRemaining != null) {
+                                    "%02d:%02d".format(
+                                        state.sleepTimerSecondsRemaining / 60,
+                                        state.sleepTimerSecondsRemaining % 60
+                                    )
+                                } else {
+                                    "Sleep"
+                                },
+                                color = Color.White,
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium
+                            )
                         }
 
                         // Mushaf Text Button
                         IconButton(
                             onClick = onOpenMushafSheet,
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x33FFFFFF))
+                                .size(36.dp)
                                 .testTag("player_mushaf_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.MenuBook,
                                 contentDescription = "Mushaf Scripture Text",
                                 tint = Color.White,
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
 
@@ -616,21 +566,18 @@ fun FullScreenPlayer(
                         IconButton(
                             onClick = onOpenQueueSheet,
                             modifier = Modifier
-                                .size(34.dp)
-                                .clip(CircleShape)
-                                .background(Color(0x33FFFFFF))
+                                .size(36.dp)
                                 .testTag("player_queue_button")
                         ) {
                             Icon(
                                 imageVector = Icons.Filled.QueueMusic,
                                 contentDescription = "Surah Queue",
                                 tint = Color.White,
-                                modifier = Modifier.size(17.dp)
+                                modifier = Modifier.size(20.dp)
                             )
                         }
                     }
                 }
-            }
 
             Spacer(modifier = Modifier.height(4.dp))
         }

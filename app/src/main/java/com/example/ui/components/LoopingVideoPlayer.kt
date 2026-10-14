@@ -247,17 +247,17 @@ fun AmbientVideoBackground(
             )
         }
 
-        // Minimalist Frosted Glass Dark Gradient Overlays to keep text ultra-readable
+        // Subtle gradient overlay for status and navigation bar legibility
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         listOf(
-                            Color.Black.copy(alpha = 0.45f),
-                            Color.Transparent,
                             Color.Black.copy(alpha = 0.35f),
-                            Color.Black.copy(alpha = 0.75f)
+                            Color.Transparent,
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.3f)
                         )
                     )
                 )
