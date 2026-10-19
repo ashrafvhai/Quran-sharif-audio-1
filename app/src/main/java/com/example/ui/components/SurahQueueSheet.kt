@@ -6,31 +6,38 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.FileDownload
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -49,268 +56,370 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.QuranData
 import com.example.data.model.Surah
-import com.example.ui.theme.GoldPrimary
-import com.example.ui.theme.SurfaceCard
-import com.example.ui.theme.SurfaceCardBorder
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
+import com.example.player.AudioPlayerManager
+import com.example.player.PlayerUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SurahQueueSheet(
-    currentSurah: Surah,
-    isPlaying: Boolean,
-    onSurahSelected: (Surah) -> Unit,
-    downloadedSurahs: Set<Int>,
-    downloadingSurahs: Set<Int>,
-    onDownloadClick: (Surah) -> Unit,
-    onDismiss: () -> Unit
+    state: PlayerUiState,
+    playerManager: AudioPlayerManager,
+    onDismiss: () -> Unit,
+    sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var isAddingSurah by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
-
-    val filteredSurahs = remember(searchQuery) {
-        if (searchQuery.isBlank()) {
-            QuranData.surahs
-        } else {
-            val q = searchQuery.trim().lowercase()
-            QuranData.surahs.filter {
-                it.nameEnglish.lowercase().contains(q) ||
-                it.nameArabic.contains(q) ||
-                it.nameTranslation.lowercase().contains(q) ||
-                it.number.toString() == q
-            }
-        }
-    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color(0xF212131A),
-        tonalElevation = 8.dp,
-        dragHandle = {
-            Box(
-                modifier = Modifier
-                    .padding(vertical = 10.dp)
-                    .size(width = 36.dp, height = 4.dp)
-                    .clip(RoundedCornerShape(2.dp))
-                    .background(Color(0x44FFFFFF))
-            )
-        }
+        containerColor = Color(0xFF111827),
+        contentColor = Color.White
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp)
+                .fillMaxHeight(0.85f)
+                .padding(horizontal = 18.dp)
         ) {
-            // Header Row
+            // Header
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Surah Queue",
-                        color = TextPrimary,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                        contentDescription = null,
+                        tint = Color.White,
+                        modifier = Modifier.size(24.dp)
                     )
-                    Text(
-                        text = "114 Surahs • Tap any to play",
-                        color = TextMuted,
-                        fontSize = 12.sp
-                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "Play Order & Queue",
+                            color = Color.White,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "প্লেলিস্টের ক্রম নির্ধারণ করুন",
+                            color = Color.White.copy(alpha = 0.65f),
+                            fontSize = 12.sp
+                        )
+                    }
                 }
 
                 IconButton(
                     onClick = onDismiss,
-                    modifier = Modifier.testTag("close_queue_sheet")
+                    modifier = Modifier.testTag("close_queue_sheet_btn")
                 ) {
-                    Icon(
-                        imageVector = Icons.Filled.Close,
-                        contentDescription = "Close",
-                        tint = TextSecondary
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Continuous Autoplay Toggle Banner
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(14.dp))
+                    .background(if (state.isAutoplayEnabled) Color(0x3310B981) else Color(0x22FFFFFF))
+                    .border(
+                        1.dp,
+                        if (state.isAutoplayEnabled) Color(0xFF10B981).copy(alpha = 0.5f) else Color.White.copy(alpha = 0.15f),
+                        RoundedCornerShape(14.dp)
                     )
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Continuous Autoplay (চলমান অটোপ্লে)",
+                                color = Color.White,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                        Text(
+                            text = if (state.isAutoplayEnabled)
+                                "একের পর এক সুরা চলতেই থাকবে (Active)"
+                            else
+                                "বর্তমান সুরা শেষ হলে থেমে যাবে (Off)",
+                            color = Color.White.copy(alpha = 0.75f),
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Switch(
+                        checked = state.isAutoplayEnabled,
+                        onCheckedChange = { playerManager.toggleAutoplay() },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Color(0xFF10B981)
+                        ),
+                        modifier = Modifier.testTag("autoplay_switch")
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Queue Action buttons: Add Surah, Shuffle, Reset
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                FilterChip(
+                    selected = isAddingSurah,
+                    onClick = { isAddingSurah = !isAddingSurah },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                if (isAddingSurah) Icons.Default.Close else Icons.Default.Add,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(if (isAddingSurah) "Done Adding" else "+ Add Surah", fontSize = 12.sp)
+                        }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color.White,
+                        selectedLabelColor = Color.Black,
+                        containerColor = Color(0x22FFFFFF),
+                        labelColor = Color.White
+                    )
+                )
+
+                FilterChip(
+                    selected = state.isShuffleEnabled,
+                    onClick = { playerManager.toggleShuffle() },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Shuffle, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Shuffle", fontSize = 12.sp)
+                        }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFF6366F1),
+                        selectedLabelColor = Color.White,
+                        containerColor = Color(0x22FFFFFF),
+                        labelColor = Color.White
+                    )
+                )
+
+                FilterChip(
+                    selected = false,
+                    onClick = { playerManager.resetQueueToDefault() },
+                    label = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("1-114 Order", fontSize = 12.sp)
+                        }
+                    },
+                    colors = FilterChipDefaults.filterChipColors(
+                        containerColor = Color(0x22FFFFFF),
+                        labelColor = Color.White
+                    )
+                )
+            }
+
+            if (isAddingSurah) {
+                Spacer(modifier = Modifier.height(10.dp))
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Search Surah to add...", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.White,
+                        unfocusedTextColor = Color.White,
+                        focusedBorderColor = Color.White,
+                        unfocusedBorderColor = Color.White.copy(alpha = 0.3f)
+                    )
+                )
+
+                val filtered = QuranData.surahs.filter {
+                    it.nameEnglish.contains(searchQuery, ignoreCase = true) ||
+                            it.number.toString() == searchQuery.trim() ||
+                            it.nameArabic.contains(searchQuery)
+                }.take(6)
+
+                LazyColumn(modifier = Modifier.fillMaxWidth().height(160.dp).padding(vertical = 6.dp)) {
+                    itemsIndexed(filtered) { _, surah ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0x1AFFFFFF))
+                                .clickable {
+                                    playerManager.addToQueueNext(surah)
+                                }
+                                .padding(horizontal = 12.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "${surah.number}. ${surah.nameEnglish} (${surah.nameArabic})",
+                                color = Color.White,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = "Play Next ➔",
+                                color = Color(0xFF10B981),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Search Filter
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = {
-                    Text(
-                        text = "Filter surahs by name or number...",
-                        color = TextMuted,
-                        fontSize = 14.sp
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Search",
-                        tint = TextMuted,
-                        modifier = Modifier.size(20.dp)
-                    )
-                },
-                singleLine = true,
-                shape = RoundedCornerShape(14.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedContainerColor = SurfaceCard,
-                    unfocusedContainerColor = SurfaceCard,
-                    focusedBorderColor = GoldPrimary,
-                    unfocusedBorderColor = SurfaceCardBorder,
-                    focusedTextColor = TextPrimary,
-                    unfocusedTextColor = TextPrimary
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("queue_search_input")
+            Text(
+                text = "Queue / Play Sequence (${state.playbackQueue.size} Surahs)",
+                color = Color.White.copy(alpha = 0.70f),
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Queue List
+            // The Queue list with re-order buttons (Move Up, Move Down, Delete, Tap to Play)
             LazyColumn(
-                contentPadding = PaddingValues(bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(420.dp)
+                    .weight(1f)
             ) {
-                items(filteredSurahs, key = { it.number }) { surah ->
-                    val isCurrent = surah.number == currentSurah.number
-                    val isDownloaded = downloadedSurahs.contains(surah.number)
-                    val isDownloading = downloadingSurahs.contains(surah.number)
+                itemsIndexed(state.playbackQueue) { index, surah ->
+                    val isCurrent = surah.number == state.currentSurah.number
 
-                    QueueSurahItem(
-                        surah = surah,
-                        isCurrent = isCurrent,
-                        isPlaying = isPlaying,
-                        isDownloaded = isDownloaded,
-                        isDownloading = isDownloading,
-                        onClick = { onSurahSelected(surah) },
-                        onDownloadClick = { onDownloadClick(surah) }
-                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isCurrent) Color(0x33FFFFFF) else Color(0x14FFFFFF))
+                            .border(
+                                1.dp,
+                                if (isCurrent) Color.White.copy(alpha = 0.45f) else Color.White.copy(alpha = 0.08f),
+                                RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                playerManager.playSurah(surah, state.currentReciter, startPlaying = true)
+                            }
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Queue index / Playing indicator
+                            Box(
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .clip(CircleShape)
+                                    .background(if (isCurrent) Color.White else Color.White.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                if (isCurrent && state.isPlaying) {
+                                    Icon(
+                                        imageVector = Icons.Default.GraphicEq,
+                                        contentDescription = null,
+                                        tint = Color.Black,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                } else {
+                                    Text(
+                                        text = "${index + 1}",
+                                        color = if (isCurrent) Color.Black else Color.White,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.width(10.dp))
+
+                            // Surah info
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = "${surah.number}. ${surah.nameEnglish}",
+                                    color = Color.White,
+                                    fontSize = 14.sp,
+                                    fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.SemiBold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                Text(
+                                    text = "${surah.nameArabic} • ${surah.versesCount} verses",
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    fontSize = 11.sp
+                                )
+                            }
+
+                            // Reordering buttons (Move Up ⬆️, Move Down ⬇️)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (index > 0) {
+                                    IconButton(
+                                        onClick = { playerManager.moveQueueItem(index, index - 1) },
+                                        modifier = Modifier.size(36.dp).testTag("queue_move_up_${surah.number}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowUpward,
+                                            contentDescription = "Move Up",
+                                            tint = Color.White.copy(alpha = 0.9f),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+
+                                if (index < state.playbackQueue.size - 1) {
+                                    IconButton(
+                                        onClick = { playerManager.moveQueueItem(index, index + 1) },
+                                        modifier = Modifier.size(36.dp).testTag("queue_move_down_${surah.number}")
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.ArrowDownward,
+                                            contentDescription = "Move Down",
+                                            tint = Color.White.copy(alpha = 0.9f),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    }
+                                }
+
+                                IconButton(
+                                    onClick = { playerManager.removeFromQueue(surah.number) },
+                                    modifier = Modifier.size(36.dp).testTag("queue_remove_${surah.number}")
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "Remove",
+                                        tint = Color.White.copy(alpha = 0.6f),
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun QueueSurahItem(
-    surah: Surah,
-    isCurrent: Boolean,
-    isPlaying: Boolean,
-    isDownloaded: Boolean,
-    isDownloading: Boolean,
-    onClick: () -> Unit,
-    onDownloadClick: () -> Unit
-) {
-    val bgModifier = if (isCurrent) {
-        Modifier.background(GoldPrimary.copy(alpha = 0.12f))
-    } else {
-        Modifier.background(SurfaceCard.copy(alpha = 0.6f))
-    }
-
-    val borderModifier = if (isCurrent) {
-        Modifier.border(1.2.dp, GoldPrimary.copy(alpha = 0.8f), RoundedCornerShape(14.dp))
-    } else {
-        Modifier.border(1.dp, SurfaceCardBorder, RoundedCornerShape(14.dp))
-    }
-
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(14.dp))
-            .then(bgModifier)
-            .then(borderModifier)
-            .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 10.dp)
-            .testTag("queue_item_${surah.number}"),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        // Medallion
-        Box(
-            modifier = Modifier
-                .size(38.dp)
-                .clip(CircleShape)
-                .background(if (isCurrent) GoldPrimary else Color(0x18FFFFFF)),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isCurrent && isPlaying) {
-                Icon(
-                    imageVector = Icons.Filled.GraphicEq,
-                    contentDescription = "Playing",
-                    tint = Color(0xFF090A0E),
-                    modifier = Modifier.size(20.dp)
-                )
-            } else {
-                Text(
-                    text = "${surah.number}",
-                    color = if (isCurrent) Color(0xFF090A0E) else GoldPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        // Titles
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = "${surah.number}. ${surah.nameEnglish}",
-                color = if (isCurrent) GoldPrimary else TextPrimary,
-                fontSize = 14.sp,
-                fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "${surah.nameTranslation} • ${surah.versesCount} verses • ${surah.revelationType}",
-                color = TextMuted,
-                fontSize = 11.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-        }
-
-        // Arabic Name
-        Text(
-            text = surah.nameArabic,
-            color = if (isCurrent) GoldPrimary else TextPrimary.copy(alpha = 0.85f),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 8.dp)
-        )
-
-        // Download Action
-        if (isDownloading) {
-            CircularProgressIndicator(
-                modifier = Modifier
-                    .size(32.dp)
-                    .padding(6.dp),
-                color = GoldPrimary,
-                strokeWidth = 2.dp
-            )
-        } else {
-            IconButton(
-                onClick = onDownloadClick,
-                modifier = Modifier.size(36.dp)
-            ) {
-                Icon(
-                    imageVector = if (isDownloaded) Icons.Filled.DownloadDone else Icons.Outlined.FileDownload,
-                    contentDescription = "Download Surah",
-                    tint = if (isDownloaded) GoldPrimary else TextMuted,
-                    modifier = Modifier.size(20.dp)
-                )
-            }
+            Spacer(modifier = Modifier.height(10.dp))
         }
     }
 }

@@ -18,14 +18,11 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -40,36 +37,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
+import com.example.player.AudioPlayerManager
+import com.example.player.PlayerUiState
 import com.example.ui.components.ReciterAvatar
-import com.example.ui.theme.SurfaceCard
-import com.example.ui.theme.SurfaceCardBorder
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
 
 @Composable
 fun RecitersScreen(
-    onSelectReciter: (Reciter) -> Unit,
-    onQuickPlayReciter: (Reciter) -> Unit,
+    playerState: PlayerUiState,
+    playerManager: AudioPlayerManager,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredReciters = remember(searchQuery) {
+    val reciters = remember(searchQuery) {
         if (searchQuery.isBlank()) {
             ReciterData.reciters
         } else {
             val q = searchQuery.trim().lowercase()
             ReciterData.reciters.filter {
                 it.name.lowercase().contains(q) ||
-                it.arabicName.contains(q) ||
-                it.country.lowercase().contains(q) ||
-                it.subtitle.lowercase().contains(q) ||
-                it.style.lowercase().contains(q)
+                        it.arabicName.contains(q) ||
+                        it.country.lowercase().contains(q)
             }
         }
     }
@@ -77,204 +70,111 @@ fun RecitersScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
+            .background(Color.Black)
             .statusBarsPadding()
-            .padding(horizontal = 20.dp)
+            .padding(horizontal = 16.dp)
     ) {
-        // SCREEN TITLE (Clean English Glass Header)
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(
-                    text = "Qur'an Reciters",
-                    color = TextPrimary,
-                    fontSize = 26.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    text = "10 Master Qaris of the Islamic World",
-                    color = TextMuted,
-                    fontSize = 13.sp
-                )
-            }
-        }
+        Spacer(modifier = Modifier.height(8.dp))
 
-        // SEARCH BAR
+        Text(
+            text = "Featured Qaris (প্রখ্যাত ক্বারীগণ)",
+            color = Color.White,
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = "বিশ্ববিখ্যাত ১০ জন ক্বারীর সুললিত কণ্ঠ",
+            color = Color.White.copy(alpha = 0.65f),
+            fontSize = 12.sp
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = {
-                Text(
-                    text = "Search reciter by name or country...",
-                    color = TextMuted,
-                    fontSize = 14.sp
-                )
-            },
-            leadingIcon = {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = "Search",
-                    tint = TextMuted,
-                    modifier = Modifier.size(20.dp)
-                )
-            },
-            trailingIcon = {
-                if (searchQuery.isNotEmpty()) {
-                    IconButton(onClick = { searchQuery = "" }) {
-                        Icon(
-                            imageVector = Icons.Filled.Close,
-                            contentDescription = "Clear",
-                            tint = TextMuted,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                }
-            },
+            placeholder = { Text("Search reciter by name...", color = Color.White.copy(alpha = 0.45f), fontSize = 13.sp) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.5f)) },
+            modifier = Modifier.fillMaxWidth().testTag("reciters_search_input"),
             singleLine = true,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = SurfaceCard,
-                unfocusedContainerColor = SurfaceCard,
-                focusedBorderColor = Color.White,
-                unfocusedBorderColor = SurfaceCardBorder,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp)
-                .testTag("reciters_search_input")
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color.White.copy(alpha = 0.8f),
+                unfocusedBorderColor = Color.White.copy(alpha = 0.2f),
+                focusedContainerColor = Color(0x1AFFFFFF),
+                unfocusedContainerColor = Color(0x14FFFFFF)
+            )
         )
 
-        // PROMINENT LARGE RECITER CARDS (As requested: "যেনো সব হুজুরের নাম বড় করে থাকে এবং ইউজার বুঝতে পারে")
+        Spacer(modifier = Modifier.height(12.dp))
+
         LazyColumn(
-            contentPadding = PaddingValues(top = 8.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 120.dp)
         ) {
-            items(filteredReciters, key = { it.id }) { reciter ->
-                ReciterLargeCard(
-                    reciter = reciter,
-                    onCardClick = { onSelectReciter(reciter) },
-                    onPlayClick = { onQuickPlayReciter(reciter) }
-                )
-            }
-        }
-    }
-}
+            items(reciters, key = { it.id }) { qari ->
+                val isSelected = playerState.currentReciter.id == qari.id
 
-/**
- * Prominent Glass Card for Reciter:
- * - Reciter portrait displayed in rich, vivid natural color
- * - Large, prominent, bold English name so users immediately recognize each Shaykh
- * - Subtitle displaying title, role, and country
- * - Instant play button
- */
-@Composable
-private fun ReciterLargeCard(
-    reciter: Reciter,
-    onCardClick: () -> Unit,
-    onPlayClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .background(Color(0x18FFFFFF))
-            .border(1.2.dp, Color(0x2BFFFFFF), RoundedCornerShape(20.dp))
-            .clickable { onCardClick() }
-            .padding(16.dp)
-            .testTag("reciter_card_${reciter.id}")
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Large circular portrait in full vibrant color
-            Box(
-                modifier = Modifier
-                    .size(76.dp)
-                    .clip(CircleShape)
-                    .background(Color(0x22FFFFFF))
-                    .border(2.dp, Color.White.copy(alpha = 0.8f), CircleShape)
-            ) {
-                ReciterAvatar(
-                    reciter = reciter,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            // Prominent Text Information
-            Column(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(3.dp)
-            ) {
-                // Large Reciter Name
-                Text(
-                    text = reciter.name,
-                    color = Color.White,
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 22.sp
-                )
-
-                // Subtitle / Title (e.g. Imam of Masjid al-Haram, Kuwait, Egypt)
-                Text(
-                    text = reciter.subtitle,
-                    color = TextSecondary,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium,
-                    lineHeight = 16.sp
-                )
-
-                // Style & Listeners
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 5.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isSelected) Color(0x33FFFFFF) else Color(0x14FFFFFF))
+                        .border(
+                            1.dp,
+                            if (isSelected) Color.White.copy(alpha = 0.4f) else Color.White.copy(alpha = 0.08f),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable {
+                            playerManager.switchReciter(qari)
+                        }
+                        .padding(14.dp)
                 ) {
-                    Text(
-                        text = reciter.style,
-                        color = TextMuted,
-                        fontSize = 11.sp
-                    )
-                    Text(
-                        text = "•",
-                        color = TextMuted,
-                        fontSize = 11.sp
-                    )
-                    Text(
-                        text = reciter.listenerCount,
-                        color = Color.White.copy(alpha = 0.8f),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        ReciterAvatar(reciter = qari, size = 52.dp)
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = qari.name,
+                                color = Color.White,
+                                fontSize = 15.sp,
+                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = "${qari.arabicName} • ${qari.country}",
+                                color = Color.White.copy(alpha = 0.7f),
+                                fontSize = 12.sp,
+                                maxLines = 1
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "${qari.style} • ${qari.listenerCount}",
+                                color = Color.White.copy(alpha = 0.5f),
+                                fontSize = 11.sp,
+                                maxLines = 1
+                            )
+                        }
+
+                        if (isSelected) {
+                            Icon(
+                                imageVector = Icons.Default.GraphicEq,
+                                contentDescription = "Active",
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
                 }
-            }
-
-            Spacer(modifier = Modifier.width(10.dp))
-
-            // Round Play Button
-            Box(
-                modifier = Modifier
-                    .size(46.dp)
-                    .clip(CircleShape)
-                    .background(Color.White)
-                    .clickable { onPlayClick() }
-                    .testTag("reciter_play_${reciter.id}"),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = "Play ${reciter.name}",
-                    tint = Color.Black,
-                    modifier = Modifier.size(26.dp)
-                )
             }
         }
     }

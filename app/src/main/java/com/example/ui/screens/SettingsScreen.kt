@@ -20,395 +20,203 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CleaningServices
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.GraphicEq
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Nightlight
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.player.AudioPlayerManager
+import com.example.player.PlayerUiState
 import com.example.ui.theme.AppCustomTheme
-import com.example.ui.theme.GoldPrimary
-import com.example.ui.theme.SurfaceCard
-import com.example.ui.theme.SurfaceCardBorder
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
-import com.example.ui.theme.TextSecondary
 import com.example.ui.theme.ThemeManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun SettingsScreen(
+    playerState: PlayerUiState,
+    playerManager: AudioPlayerManager,
     modifier: Modifier = Modifier
 ) {
-    var audioBitrate by remember { mutableStateOf("High (128 kbps)") }
-    var autoLoopAmbient by remember { mutableStateOf(true) }
-    var backgroundPlayback by remember { mutableStateOf(true) }
-    var darkThemeOled by remember { mutableStateOf(true) }
+    val currentTheme by ThemeManager.currentTheme.collectAsState()
 
-    val snackbarHostState = remember { SnackbarHostState() }
-    val coroutineScope = rememberCoroutineScope()
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color.Black)
+            .statusBarsPadding()
+            .padding(horizontal = 16.dp)
+    ) {
+        Spacer(modifier = Modifier.height(8.dp))
 
-    Box(modifier = modifier.fillMaxSize()) {
+        Text("Settings & Customization", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text("অডিও প্লেব্যাক এবং থিম পছন্দসমূহ", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(top = 12.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(bottom = 120.dp)
         ) {
-            // SCREEN TITLE
+            // Continuous Autoplay Setting
             item {
-                Text(
-                    text = "Settings",
-                    color = TextPrimary,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
+                Text("Playback Preferences", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(8.dp))
 
-            // AUDIO & STREAMING SECTION
-            item {
-                SettingsGroup(title = "Audio & Playback") {
-                    SettingsRow(
-                        icon = Icons.Filled.GraphicEq,
-                        title = "Streaming Quality",
-                        subtitle = audioBitrate,
-                        onClick = {
-                            audioBitrate = when (audioBitrate) {
-                                "High (128 kbps)" -> "Studio (192 kbps)"
-                                "Studio (192 kbps)" -> "Standard (64 kbps)"
-                                else -> "High (128 kbps)"
-                            }
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Audio quality set to $audioBitrate")
-                            }
-                        }
-                    )
-
-                    SettingsSwitchRow(
-                        icon = Icons.Filled.VolumeUp,
-                        title = "Loop Ambient Sounds",
-                        subtitle = "Seamlessly loop background sounds with recitation",
-                        checked = autoLoopAmbient,
-                        onCheckedChange = { autoLoopAmbient = it }
-                    )
-
-                    SettingsSwitchRow(
-                        icon = Icons.Filled.Nightlight,
-                        title = "Background Audio",
-                        subtitle = "Keep recitations playing when screen locks",
-                        checked = backgroundPlayback,
-                        onCheckedChange = { backgroundPlayback = it }
-                    )
-                }
-            }
-
-            // APPEARANCE & CUSTOM THEME SECTION
-            item {
-                val currentTheme by ThemeManager.currentTheme.collectAsState()
-
-                SettingsGroup(title = "Appearance & Custom Theme") {
-                    Text(
-                        text = "Choose your preferred Glass UI theme. Pure Black & White is default:",
-                        color = TextSecondary,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(start = 4.dp, bottom = 10.dp)
-                    )
-
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AppCustomTheme.entries.forEach { theme ->
-                            val isSelected = theme == currentTheme
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(if (isSelected) theme.primaryColor.copy(alpha = 0.2f) else Color(0x18FFFFFF))
-                                    .border(
-                                        if (isSelected) 1.8.dp else 1.dp,
-                                        if (isSelected) theme.primaryColor else Color(0x2BFFFFFF),
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .clickable {
-                                        ThemeManager.setTheme(theme)
-                                        coroutineScope.launch {
-                                            snackbarHostState.showSnackbar("Applied theme: ${theme.displayName}")
-                                        }
-                                    }
-                                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                                    .testTag("theme_option_${theme.id}")
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Text(text = theme.emoji, fontSize = 20.sp)
-                                        Column {
-                                            Text(
-                                                text = theme.displayName,
-                                                color = Color.White,
-                                                fontSize = 14.sp,
-                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
-                                            )
-                                            Text(
-                                                text = theme.description,
-                                                color = TextMuted,
-                                                fontSize = 11.sp
-                                            )
-                                        }
-                                    }
-
-                                    if (isSelected) {
-                                        Box(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(6.dp))
-                                                .background(theme.primaryColor)
-                                                .padding(horizontal = 8.dp, vertical = 3.dp)
-                                        ) {
-                                            Text(
-                                                text = "ACTIVE",
-                                                color = theme.surfaceBackground,
-                                                fontSize = 10.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // STORAGE & CACHE
-            item {
-                SettingsGroup(title = "Storage") {
-                    SettingsRow(
-                        icon = Icons.Filled.CleaningServices,
-                        title = "Clear Audio Cache",
-                        subtitle = "Free temporary streaming files (~24 MB)",
-                        onClick = {
-                            coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Audio streaming cache cleared successfully")
-                            }
-                        }
-                    )
-                }
-            }
-
-            // ABOUT EASY QURANIFY
-            item {
-                SettingsGroup(title = "About") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(SurfaceCard)
-                            .border(1.dp, SurfaceCardBorder, RoundedCornerShape(16.dp))
-                            .padding(18.dp)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x1AFFFFFF))
+                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(40.dp)
-                                        .clip(CircleShape)
-                                        .background(GoldPrimary.copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Text(text = "📖", fontSize = 20.sp)
-                                }
-                                Column {
-                                    Text(
-                                        text = "Easy Quranify",
-                                        color = TextPrimary,
-                                        fontSize = 16.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = "Version 1.0.0 • Mobile-First",
-                                        color = GoldPrimary,
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.Autorenew, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(20.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Continuous Autoplay", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                             }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Easy Quranify is designed to bring peace, tranquility, and closeness to the words of Allah through world-class recitations blended with soothing ambient nature backgrounds.",
-                                color = TextSecondary,
-                                fontSize = 13.sp,
-                                lineHeight = 19.sp
+                                "একটি সুরা শেষ হলে স্বয়ংক্রিয়ভাবে পরবর্তী সুরা চালু হবে যতক্ষণ না আপনি থামান।",
+                                color = Color.White.copy(alpha = 0.65f),
+                                fontSize = 12.sp
                             )
+                        }
 
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            Text(
-                                text = "Audio recitations powered by mp3quran.net API. Ambient natural soundscapes royalty-free.",
-                                color = TextMuted,
-                                fontSize = 11.sp
+                        Switch(
+                            checked = playerState.isAutoplayEnabled,
+                            onCheckedChange = { playerManager.toggleAutoplay() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                checkedTrackColor = Color(0xFF10B981)
                             )
+                        )
+                    }
+                }
+            }
+
+            // Reset queue order button
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x1AFFFFFF))
+                        .border(1.dp, Color.White.copy(alpha = 0.12f), RoundedCornerShape(14.dp))
+                        .clickable { playerManager.resetQueueToDefault() }
+                        .padding(16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.RestartAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text("Reset Queue Sequence (১-১১৪ ক্রম)", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                Text("প্লেলিস্টের ক্রমকে মূল সূরা ক্রম অনুসারে সাজাও", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        SnackbarHost(
-            hostState = snackbarHostState,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = 100.dp)
-        )
-    }
-}
-
-@Composable
-private fun SettingsGroup(
-    title: String,
-    content: @Composable () -> Unit
-) {
-    Column {
-        Text(
-            text = title,
-            color = GoldPrimary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = 0.8.sp,
-            modifier = Modifier.padding(bottom = 10.dp, start = 4.dp)
-        )
-        content()
-    }
-}
-
-@Composable
-private fun SettingsRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceCard)
-            .border(1.dp, SurfaceCardBorder, RoundedCornerShape(14.dp))
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = GoldPrimary,
-                modifier = Modifier.size(22.dp)
-            )
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = TextPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = subtitle,
-                    color = TextMuted,
-                    fontSize = 12.sp
-                )
+            // Themes Section
+            item {
+                Spacer(modifier = Modifier.height(20.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Palette, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Visual Glass Themes (গ্লাস থিম)", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
-        }
-    }
-}
 
-@Composable
-private fun SettingsSwitchRow(
-    icon: ImageVector,
-    title: String,
-    subtitle: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .background(SurfaceCard)
-            .border(1.dp, SurfaceCardBorder, RoundedCornerShape(14.dp))
-            .padding(horizontal = 16.dp, vertical = 10.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = title,
-                tint = GoldPrimary,
-                modifier = Modifier.size(22.dp)
-            )
-            Spacer(modifier = Modifier.width(14.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    color = TextPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                Text(
-                    text = subtitle,
-                    color = TextMuted,
-                    fontSize = 12.sp
-                )
+            items(AppCustomTheme.entries.size) { idx ->
+                val theme = AppCustomTheme.entries[idx]
+                val isSelected = theme == currentTheme
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(if (isSelected) Color(0x33FFFFFF) else Color(0x14FFFFFF))
+                        .border(
+                            1.dp,
+                            if (isSelected) theme.primaryColor else Color.White.copy(alpha = 0.1f),
+                            RoundedCornerShape(14.dp)
+                        )
+                        .clickable { ThemeManager.setTheme(theme) }
+                        .padding(14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(theme.primaryColor),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(theme.emoji, fontSize = 16.sp)
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(theme.displayName, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(theme.description, color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                        }
+
+                        if (isSelected) {
+                            Icon(Icons.Default.Check, contentDescription = "Active", tint = Color.White, modifier = Modifier.size(20.dp))
+                        }
+                    }
+                }
             }
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color(0xFF090A0E),
-                    checkedTrackColor = GoldPrimary,
-                    uncheckedThumbColor = TextMuted,
-                    uncheckedTrackColor = Color(0x33FFFFFF)
-                )
-            )
+
+            // About App section
+            item {
+                Spacer(modifier = Modifier.height(24.dp))
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(14.dp))
+                        .background(Color(0x0FFFFFFF))
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Easy Quranify v1.0", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Ultra-optimized Android App • Continuous Playback", color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp)
+                    }
+                }
+            }
         }
     }
 }

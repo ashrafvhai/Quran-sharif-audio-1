@@ -13,30 +13,24 @@ fun EasyQuranifyTheme(
 ) {
     val activeCustomTheme by ThemeManager.currentTheme.collectAsState()
 
-    val dynamicScheme = darkColorScheme(
+    val darkColors = darkColorScheme(
         primary = activeCustomTheme.primaryColor,
-        onPrimary = activeCustomTheme.surfaceBackground,
+        onPrimary = Color.Black,
         primaryContainer = activeCustomTheme.cardBackground,
         onPrimaryContainer = Color.White,
-        secondary = activeCustomTheme.primaryColor.copy(alpha = 0.85f),
-        onSecondary = activeCustomTheme.surfaceBackground,
-        secondaryContainer = activeCustomTheme.cardBackground,
-        onSecondaryContainer = Color.White,
-        tertiary = activeCustomTheme.primaryColor,
-        onTertiary = Color.White,
+        secondary = activeCustomTheme.primaryColor,
+        onSecondary = Color.Black,
         background = activeCustomTheme.surfaceBackground,
         onBackground = Color.White,
         surface = activeCustomTheme.surfaceBackground,
         onSurface = Color.White,
         surfaceVariant = activeCustomTheme.cardBackground,
         onSurfaceVariant = Color.White.copy(alpha = 0.8f),
-        outline = activeCustomTheme.cardBorder,
-        error = ErrorColor,
-        onError = Color.White
+        outline = activeCustomTheme.cardBorder
     )
 
     MaterialTheme(
-        colorScheme = dynamicScheme,
+        colorScheme = darkColors,
         typography = Typography,
         content = content
     )

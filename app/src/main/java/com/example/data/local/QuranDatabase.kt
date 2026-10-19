@@ -8,10 +8,10 @@ import androidx.room.RoomDatabase
 @Database(
     entities = [
         FavoriteEntity::class,
-        RecentHistoryEntity::class,
+        DownloadEntity::class,
         PlaylistEntity::class,
         PlaylistItemEntity::class,
-        DownloadEntity::class
+        RecentHistoryEntity::class
     ],
     version = 1,
     exportSchema = false
@@ -29,9 +29,7 @@ abstract class QuranDatabase : RoomDatabase() {
                     context.applicationContext,
                     QuranDatabase::class.java,
                     "easy_quranify_database"
-                )
-                    .fallbackToDestructiveMigration()
-                    .build()
+                ).fallbackToDestructiveMigration().build()
                 INSTANCE = instance
                 instance
             }

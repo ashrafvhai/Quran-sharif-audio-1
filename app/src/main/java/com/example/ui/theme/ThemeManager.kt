@@ -16,54 +16,54 @@ enum class AppCustomTheme(
     val cardBorder: Color
 ) {
     OLED_GLASS_BW(
-        id = "oled_bw",
-        displayName = "Monochrome Glass B&W",
-        description = "Pure OLED black with crisp frosted glass and white accents",
-        emoji = "⚪",
-        primaryColor = Color(0xFFFFFFFF),
-        surfaceBackground = Color(0xFF000000),
-        cardBackground = Color(0x1AFFFFFF),
-        cardBorder = Color(0x33FFFFFF)
+        "oled_bw",
+        "Monochrome Glass B&W",
+        "Pure OLED black with crisp frosted glass and white accents",
+        "⚪",
+        Color(0xFFFFFFFF),
+        Color(0xFF000000),
+        Color(0x1BFFFFFF),
+        Color(0x34FFFFFF)
     ),
     FROST_CRYSTAL(
-        id = "frost_crystal",
-        displayName = "Frosted Crystal Glass",
-        description = "Smoky obsidian with translucent silver crystal glass",
-        emoji = "❄️",
-        primaryColor = Color(0xFFE2E8F0),
-        surfaceBackground = Color(0xFF08090C),
-        cardBackground = Color(0x22CBD5E1),
-        cardBorder = Color(0x3DF1F5F9)
+        "frost_crystal",
+        "Frosted Crystal Glass",
+        "Smoky obsidian with translucent silver crystal glass",
+        "❄️",
+        Color(0xFFE2E8F0),
+        Color(0xFF080B10),
+        Color(0x22FFFFFF),
+        Color(0x3DFFFFFF)
     ),
     SACRED_EMERALD(
-        id = "emerald",
-        displayName = "Midnight Emerald Glass",
-        description = "Deep obsidian with sacred emerald frosted glass glow",
-        emoji = "🟢",
-        primaryColor = Color(0xFF10B981),
-        surfaceBackground = Color(0xFF020F08),
-        cardBackground = Color(0x2210B981),
-        cardBorder = Color(0x4434D399)
+        "emerald",
+        "Midnight Emerald Glass",
+        "Deep obsidian with sacred emerald frosted glass glow",
+        "🟢",
+        Color(0xFF10B981),
+        Color(0xFF021B08),
+        Color(0x2210B981),
+        Color(0x4410B981)
     ),
     CELESTIAL_GOLD(
-        id = "gold",
-        displayName = "Celestial Amber Glass",
-        description = "Deep dark void with warm golden amber glass glow",
-        emoji = "🟡",
-        primaryColor = Color(0xFFF59E0B),
-        surfaceBackground = Color(0xFF0E0A04),
-        cardBackground = Color(0x22F59E0B),
-        cardBorder = Color(0x44FBBF24)
+        "gold",
+        "Celestial Amber Glass",
+        "Deep dark void with warm golden amber glass glow",
+        "🟡",
+        Color(0xFFF59E0B),
+        Color(0xFF0F0B04),
+        Color(0x22F59E0B),
+        Color(0x44F59E0B)
     ),
     DEEP_SAPPHIRE(
-        id = "sapphire",
-        displayName = "Deep Sapphire Glass",
-        description = "Cosmic midnight blue with starlit sapphire glow",
-        emoji = "🔵",
-        primaryColor = Color(0xFF38BDF8),
-        surfaceBackground = Color(0xFF030A14),
-        cardBackground = Color(0x2238BDF8),
-        cardBorder = Color(0x4460A5FA)
+        "sapphire",
+        "Deep Sapphire Glass",
+        "Cosmic midnight blue with starlit sapphire glow",
+        "🔵",
+        Color(0xFF38BDF8),
+        Color(0xFF030A14),
+        Color(0x2238BDF8),
+        Color(0x4438BDF8)
     )
 }
 
@@ -76,6 +76,7 @@ object ThemeManager {
     }
 
     fun setThemeById(id: String) {
-        _currentTheme.value = AppCustomTheme.entries.find { it.id == id } ?: AppCustomTheme.OLED_GLASS_BW
+        val theme = AppCustomTheme.entries.find { it.id == id } ?: AppCustomTheme.OLED_GLASS_BW
+        _currentTheme.value = theme
     }
 }

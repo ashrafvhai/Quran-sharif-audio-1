@@ -5,8 +5,8 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.os.Build
 import android.net.Uri
+import android.os.Build
 import android.util.Log
 import com.example.R
 import com.example.data.model.AmbientSound
@@ -26,30 +26,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-data class PlayerUiState(
-    val currentSurah: Surah = QuranData.surahs.first(),
-    val currentReciter: Reciter = ReciterData.reciters.first(),
-    val isPlaying: Boolean = false,
-    val isBuffering: Boolean = false,
-    val currentPositionMs: Long = 0L,
-    val durationMs: Long = 1000L,
-    val playbackSpeed: Float = 1.0f,
-    val ambientSound: AmbientSound = AmbientSoundData.getById("none"),
-    val ambientVolume: Float = 0.5f,
-    val recitationVolume: Float = 1.0f,
-    val sleepTimerMinutes: Int? = null,
-    val sleepTimerSecondsRemaining: Int? = null,
-    val errorMessage: String? = null,
-    val isMuted: Boolean = false,
-    val selectedVideoThemeId: String = "auto_mix"
-)
-
 class AudioPlayerManager(
     private val context: Context,
     private val coroutineScope: CoroutineScope
 ) {
     private val TAG = "AudioPlayerManager"
-
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
 
@@ -70,86 +51,46 @@ class AudioPlayerManager(
     private var sleepTimerJob: Job? = null
     private var usingFallback = false
 
-    fun unmuteAndMaximizeVolume() {
-        _uiState.update { it.copy(isMuted = false, recitationVolume = 1.0f) }
-        try {
-            audioManager?.let { am ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
-                }
-                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
-                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                if (currentVol <= (maxVol * 0.3f)) {
-                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.85f).toInt().coerceAtLeast(1), 0)
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Notice setting volume: ${e.message}")
-        }
-        try {
-            recitationPlayer?.setVolume(1.0f, 1.0f)
-        } catch (_: Exception) {}
-    }
-
-    fun playSurah(surah: Surah, reciter: Reciter, startPlaying: Boolean = true) {
-        usingFallback = false
-        _uiState.update {
-            it.copy(
-                currentSurah = surah,
-                currentReciter = reciter,
-                isBuffering = true,
-                errorMessage = null,
-                currentPositionMs = 0L,
-                durationMs = 1000L,
-                isMuted = false,
-                recitationVolume = 1.0f
-            )
-        }
-        unmuteAndMaximizeVolume()
-        prepareRecitation(surah, reciter, useFallback = false, autoPlay = startPlaying)
-    }
-
-    fun switchReciter(reciter: Reciter) {
-        val currentSurah = _uiState.value.currentSurah
-        val shouldPlay = _uiState.value.isPlaying
-        playSurah(currentSurah, reciter, startPlaying = shouldPlay)
-    }
-
-    fun setVideoTheme(themeId: String) {
-        _uiState.update { it.copy(selectedVideoThemeId = themeId) }
+    init {
+        // Initialize queue with all 114 Surahs
+        _uiState.update { it.copy(playbackQueue = QuranData.surahs) }
     }
 
     private fun requestSystemAudioFocus() {
         try {
             audioManager?.let { am ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    am.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_UNMUTE, 0)
-                }
-                val currentVol = am.getStreamVolume(AudioManager.STREAM_MUSIC)
-                val maxVol = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-                if (currentVol <= (maxVol * 0.3f)) {
-                    am.setStreamVolume(AudioManager.STREAM_MUSIC, (maxVol * 0.85f).toInt().coerceAtLeast(1), 0)
-                }
-
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val playbackAttributes = AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build()
-                    val focusReq = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                        .setAudioAttributes(playbackAttributes)
+                    val focusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+                        .setAudioAttributes(
+                            AudioAttributes.Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .build()
+                        )
                         .setAcceptsDelayedFocusGain(true)
-                        .setOnAudioFocusChangeListener { _ ->
-                            applyRecitationVolume()
+                        .setOnAudioFocusChangeListener { focusChange ->
+                            when (focusChange) {
+                                AudioManager.AUDIOFOCUS_LOSS -> {
+                                    togglePlayPause()
+                                }
+                                AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+                                    recitationPlayer?.setVolume(0.2f, 0.2f)
+                                }
+                                AudioManager.AUDIOFOCUS_GAIN -> {
+                                    applyRecitationVolume()
+                                }
+                            }
                         }
                         .build()
-                    audioFocusRequest = focusReq
-                    am.requestAudioFocus(focusReq)
+                    audioFocusRequest = focusRequest
+                    am.requestAudioFocus(focusRequest)
                 } else {
                     @Suppress("DEPRECATION")
                     am.requestAudioFocus(
-                        { _ ->
-                            applyRecitationVolume()
+                        { focusChange ->
+                            if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+                                applyRecitationVolume()
+                            }
                         },
                         AudioManager.STREAM_MUSIC,
                         AudioManager.AUDIOFOCUS_GAIN
@@ -165,13 +106,13 @@ class AudioPlayerManager(
         isRecitationPrepared = false
         val player = recitationPlayer
         recitationPlayer = null
-        if (player != null) {
+        player?.let {
             try {
-                player.setOnPreparedListener(null)
-                player.setOnCompletionListener(null)
-                player.setOnErrorListener(null)
-                player.reset()
-                player.release()
+                it.setOnPreparedListener(null)
+                it.setOnCompletionListener(null)
+                it.setOnErrorListener(null)
+                it.reset()
+                it.release()
             } catch (e: Exception) {
                 Log.w(TAG, "Error safely releasing recitation player", e)
             }
@@ -182,17 +123,50 @@ class AudioPlayerManager(
         isAmbientPrepared = false
         val player = ambientPlayer
         ambientPlayer = null
-        if (player != null) {
+        player?.let {
             try {
-                player.setOnPreparedListener(null)
-                player.setOnCompletionListener(null)
-                player.setOnErrorListener(null)
-                player.reset()
-                player.release()
+                it.setOnPreparedListener(null)
+                it.setOnCompletionListener(null)
+                it.setOnErrorListener(null)
+                it.reset()
+                it.release()
             } catch (e: Exception) {
                 Log.w(TAG, "Error safely releasing ambient player", e)
             }
         }
+    }
+
+    fun playSurah(surah: Surah, reciter: Reciter, startPlaying: Boolean = true) {
+        usingFallback = false
+        _uiState.update { current ->
+            // If surah is not in current queue, prepend or ensure it's in queue
+            val queue = if (current.playbackQueue.any { it.number == surah.number }) {
+                current.playbackQueue
+            } else {
+                listOf(surah) + current.playbackQueue
+            }
+            current.copy(
+                currentSurah = surah,
+                currentReciter = reciter,
+                isPlaying = false,
+                isBuffering = true,
+                currentPositionMs = 0L,
+                durationMs = 1000L,
+                playbackQueue = queue,
+                errorMessage = null
+            )
+        }
+        prepareRecitation(surah, reciter, useFallback = false, autoPlay = startPlaying)
+    }
+
+    fun switchReciter(reciter: Reciter) {
+        val currentSurah = _uiState.value.currentSurah
+        val shouldPlay = _uiState.value.isPlaying
+        playSurah(currentSurah, reciter, shouldPlay)
+    }
+
+    fun setVideoTheme(themeId: String) {
+        _uiState.update { it.copy(selectedVideoThemeId = themeId) }
     }
 
     private fun prepareRecitation(surah: Surah, reciter: Reciter, useFallback: Boolean, autoPlay: Boolean) {
@@ -201,101 +175,82 @@ class AudioPlayerManager(
 
         coroutineScope.launch(Dispatchers.IO) {
             try {
+                _uiState.update { it.copy(isBuffering = true, errorMessage = null) }
                 val url = if (useFallback) reciter.getFallbackAudioUrl(surah.number) else reciter.getAudioUrl(surah.number)
-                Log.d(TAG, "Preparing recitation URL: $url")
+                val player = MediaPlayer()
 
-                val player = MediaPlayer().apply {
-                    // Set MUSIC audio attributes so sound routes through media speaker clearly
-                    setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .setLegacyStreamType(AudioManager.STREAM_MUSIC)
-                            .build()
-                    )
-                    @Suppress("DEPRECATION")
-                    setAudioStreamType(AudioManager.STREAM_MUSIC)
+                player.setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .build()
+                )
 
-                    if (surah.number == 1 && useFallback) {
-                        try {
-                            val rawUri = Uri.parse("android.resource://${context.packageName}/${R.raw.audio_fatihah}")
-                            setDataSource(context, rawUri)
-                        } catch (_: Exception) {
-                            setDataSource(url)
-                        }
-                    } else {
-                        setDataSource(url)
+                if (surah.number == 1 && !useFallback) {
+                    try {
+                        val uri = Uri.parse("android.resource://${context.packageName}/${R.raw.audio_fatihah}")
+                        player.setDataSource(context, uri)
+                    } catch (e: Exception) {
+                        player.setDataSource(url)
                     }
-
-                    // Ensure max volume initially
-                    setVolume(1.0f, 1.0f)
-
-                    setOnPreparedListener { mp ->
-                        isRecitationPrepared = true
-                        try {
-                            val duration = mp.duration.toLong().coerceAtLeast(1000L)
-                            _uiState.update {
-                                it.copy(
-                                    isBuffering = false,
-                                    durationMs = duration
-                                )
-                            }
-                            applyPlaybackSpeed(_uiState.value.playbackSpeed)
-                            applyRecitationVolume()
-
-                            if (autoPlay) {
-                                try {
-                                    requestSystemAudioFocus()
-                                    mp.start()
-                                    mp.setVolume(1.0f, 1.0f)
-                                    _uiState.update { it.copy(isPlaying = true, isMuted = false, recitationVolume = 1.0f) }
-                                    startProgressTracking()
-                                    ensureAmbientPlaying()
-                                } catch (e: Exception) {
-                                    Log.e(TAG, "Error starting MediaPlayer onPrepared", e)
-                                }
-                            }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error in onPrepared callback", e)
-                        }
-                    }
-
-                    setOnCompletionListener {
-                        try {
-                            _uiState.update { it.copy(isPlaying = false, currentPositionMs = 0L) }
-                            stopProgressTracking()
-                            if (_uiState.value.sleepTimerMinutes == -1) {
-                                clearSleepTimer()
-                            } else {
-                                playNext()
-                            }
-                        } catch (e: Exception) {
-                            Log.e(TAG, "Error in onCompletion callback", e)
-                        }
-                    }
-
-                    setOnErrorListener { _, what, extra ->
-                        Log.e(TAG, "Recitation error: what=$what extra=$extra")
-                        isRecitationPrepared = false
-                        coroutineScope.launch {
-                            if (!usingFallback) {
-                                usingFallback = true
-                                prepareRecitation(surah, reciter, useFallback = true, autoPlay = true)
-                            } else {
-                                _uiState.update {
-                                    it.copy(
-                                        isBuffering = false,
-                                        isPlaying = false,
-                                        errorMessage = "Recitation stream unavailable. Please check your internet connection."
-                                    )
-                                }
-                            }
-                        }
-                        true
-                    }
-
-                    prepareAsync()
+                } else {
+                    player.setDataSource(url)
                 }
+
+                val currentRecitationVolume = if (_uiState.value.isMuted) 0f else _uiState.value.recitationVolume
+                player.setVolume(currentRecitationVolume, currentRecitationVolume)
+
+                player.setOnPreparedListener { mp ->
+                    isRecitationPrepared = true
+                    val dur = mp.duration.toLong().coerceAtLeast(1000L)
+                    _uiState.update {
+                        it.copy(
+                            isBuffering = false,
+                            durationMs = dur,
+                            isPlaying = autoPlay
+                        )
+                    }
+                    applyPlaybackSpeed(_uiState.value.playbackSpeed)
+                    if (autoPlay) {
+                        requestSystemAudioFocus()
+                        applyRecitationVolume()
+                        mp.start()
+                        startProgressTracking()
+                        ensureAmbientPlaying()
+                    }
+                }
+
+                player.setOnCompletionListener {
+                    _uiState.update { it.copy(isPlaying = false, currentPositionMs = 0L) }
+                    stopProgressTracking()
+
+                    val sleepTimer = _uiState.value.sleepTimerMinutes
+                    if (sleepTimer != null && sleepTimer == -1) {
+                        clearSleepTimer()
+                    } else if (_uiState.value.isAutoplayEnabled) {
+                        // CONTINUOUS AUTOPLAY: Play the next audio in queue automatically!
+                        playNext()
+                    }
+                }
+
+                player.setOnErrorListener { _, what, extra ->
+                    Log.w(TAG, "MediaPlayer error: what=$what, extra=$extra")
+                    if (!useFallback) {
+                        usingFallback = true
+                        prepareRecitation(surah, reciter, useFallback = true, autoPlay = autoPlay)
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                isBuffering = false,
+                                isPlaying = false,
+                                errorMessage = "Audio unavailable online. Please check connection."
+                            )
+                        }
+                    }
+                    true
+                }
+
+                player.prepareAsync()
                 recitationPlayer = player
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize recitation player", e)
@@ -303,7 +258,7 @@ class AudioPlayerManager(
                     it.copy(
                         isBuffering = false,
                         isPlaying = false,
-                        errorMessage = "Cannot connect to recitation server: ${e.localizedMessage ?: "Unknown error"}"
+                        errorMessage = e.localizedMessage ?: "Unknown error"
                     )
                 }
             }
@@ -311,18 +266,12 @@ class AudioPlayerManager(
     }
 
     fun togglePlayPause() {
-        try {
-            val player = recitationPlayer
-            if (player == null || !isRecitationPrepared) {
-                playSurah(_uiState.value.currentSurah, _uiState.value.currentReciter, startPlaying = true)
-                return
-            }
-
+        val player = recitationPlayer
+        if (player != null && isRecitationPrepared) {
             if (_uiState.value.isPlaying) {
+                // User wants to PAUSE
                 try {
-                    if (player.isPlaying) {
-                        player.pause()
-                    }
+                    if (player.isPlaying) player.pause()
                 } catch (e: Exception) {
                     Log.w(TAG, "Error pausing recitation player", e)
                 }
@@ -330,22 +279,24 @@ class AudioPlayerManager(
                 stopProgressTracking()
                 pauseAmbient()
             } else {
+                // User wants to RESUME
+                // IMPORTANT BUG FIX: Do NOT call unmuteAndMaximizeVolume / do not touch system volume!
+                // Simply resume MediaPlayer at user's current volume!
                 try {
-                    unmuteAndMaximizeVolume()
                     requestSystemAudioFocus()
                     applyRecitationVolume()
                     player.start()
-                    player.setVolume(1.0f, 1.0f)
-                    _uiState.update { it.copy(isPlaying = true, isMuted = false, recitationVolume = 1.0f) }
+                    _uiState.update { it.copy(isPlaying = true) }
                     startProgressTracking()
                     ensureAmbientPlaying()
                 } catch (e: Exception) {
-                    Log.w(TAG, "Player failed to start, re-preparing...", e)
+                    Log.w(TAG, "Player failed to resume, re-preparing...", e)
                     playSurah(_uiState.value.currentSurah, _uiState.value.currentReciter, startPlaying = true)
                 }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Exception in togglePlayPause", e)
+        } else {
+            // Not prepared, prepare and start
+            playSurah(_uiState.value.currentSurah, _uiState.value.currentReciter, startPlaying = true)
         }
     }
 
@@ -353,14 +304,13 @@ class AudioPlayerManager(
         try {
             recitationPlayer?.let { player ->
                 if (isRecitationPrepared) {
-                    val maxDur = _uiState.value.durationMs
-                    val clamped = positionMs.coerceIn(0L, maxDur)
-                    player.seekTo(clamped.toInt())
-                    _uiState.update { it.copy(currentPositionMs = clamped) }
+                    val pos = positionMs.coerceIn(0L, _uiState.value.durationMs)
+                    player.seekTo(pos.toInt())
+                    _uiState.update { it.copy(currentPositionMs = pos) }
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Seek error", e)
+            Log.e(TAG, "seekTo error", e)
         }
     }
 
@@ -368,10 +318,8 @@ class AudioPlayerManager(
         try {
             recitationPlayer?.let { player ->
                 if (isRecitationPrepared) {
-                    val current = try { player.currentPosition } catch (_: Exception) { _uiState.value.currentPositionMs.toInt() }
-                    val maxDur = try { player.duration } catch (_: Exception) { _uiState.value.durationMs.toInt() }
-                    val newPos = (current + 15000).coerceAtMost(maxDur).toLong()
-                    seekTo(newPos)
+                    val currentPos = try { player.currentPosition } catch (e: Exception) { _uiState.value.currentPositionMs.toInt() }
+                    seekTo((currentPos + 15000L).coerceAtMost(_uiState.value.durationMs))
                 }
             }
         } catch (e: Exception) {
@@ -383,9 +331,8 @@ class AudioPlayerManager(
         try {
             recitationPlayer?.let { player ->
                 if (isRecitationPrepared) {
-                    val current = try { player.currentPosition } catch (_: Exception) { _uiState.value.currentPositionMs.toInt() }
-                    val newPos = (current - 15000).coerceAtLeast(0).toLong()
-                    seekTo(newPos)
+                    val currentPos = try { player.currentPosition } catch (e: Exception) { _uiState.value.currentPositionMs.toInt() }
+                    seekTo((currentPos - 15000L).coerceAtLeast(0L))
                 }
             }
         } catch (e: Exception) {
@@ -393,26 +340,117 @@ class AudioPlayerManager(
         }
     }
 
+    // CONTINUOUS AUTOPLAY & QUEUE ADVANCEMENT
     fun playNext() {
-        try {
-            val currentNum = _uiState.value.currentSurah.number
-            val nextNum = if (currentNum >= 114) 1 else currentNum + 1
-            val nextSurah = QuranData.surahs.find { it.number == nextNum } ?: QuranData.surahs.first()
-            playSurah(nextSurah, _uiState.value.currentReciter, startPlaying = true)
-        } catch (e: Exception) {
-            Log.e(TAG, "playNext error", e)
+        val state = _uiState.value
+        val queue = state.playbackQueue
+        if (queue.isEmpty()) return
+
+        if (state.isRepeatOne) {
+            // Repeat the same Surah
+            seekTo(0L)
+            togglePlayPause()
+            return
         }
+
+        val currentIndex = queue.indexOfFirst { it.number == state.currentSurah.number }
+        val nextIndex = if (currentIndex != -1 && currentIndex < queue.size - 1) {
+            currentIndex + 1
+        } else {
+            0 // Loop back to start of queue
+        }
+
+        val nextSurah = queue[nextIndex]
+        playSurah(nextSurah, state.currentReciter, startPlaying = true)
     }
 
     fun playPrevious() {
-        try {
-            val currentNum = _uiState.value.currentSurah.number
-            val prevNum = if (currentNum <= 1) 114 else currentNum - 1
-            val prevSurah = QuranData.surahs.find { it.number == prevNum } ?: QuranData.surahs.last()
-            playSurah(prevSurah, _uiState.value.currentReciter, startPlaying = true)
-        } catch (e: Exception) {
-            Log.e(TAG, "playPrevious error", e)
+        val state = _uiState.value
+        val queue = state.playbackQueue
+        if (queue.isEmpty()) return
+
+        val currentIndex = queue.indexOfFirst { it.number == state.currentSurah.number }
+        val prevIndex = if (currentIndex > 0) {
+            currentIndex - 1
+        } else {
+            queue.size - 1
         }
+
+        val prevSurah = queue[prevIndex]
+        playSurah(prevSurah, state.currentReciter, startPlaying = true)
+    }
+
+    // CUSTOM QUEUE MANAGEMENT - USER CAN SET WHICH ONE PLAYS AFTER WHICH
+    fun setCustomQueue(newQueue: List<Surah>) {
+        if (newQueue.isNotEmpty()) {
+            _uiState.update { it.copy(playbackQueue = newQueue) }
+        }
+    }
+
+    fun addToQueueNext(surah: Surah) {
+        _uiState.update { current ->
+            val mutable = current.playbackQueue.toMutableList()
+            val currentIdx = mutable.indexOfFirst { it.number == current.currentSurah.number }
+            val insertIdx = if (currentIdx != -1) currentIdx + 1 else 0
+            mutable.removeAll { it.number == surah.number } // prevent duplicates
+            val finalIdx = insertIdx.coerceIn(0, mutable.size)
+            mutable.add(finalIdx, surah)
+            current.copy(playbackQueue = mutable)
+        }
+    }
+
+    fun addToQueueEnd(surah: Surah) {
+        _uiState.update { current ->
+            val mutable = current.playbackQueue.toMutableList()
+            mutable.removeAll { it.number == surah.number }
+            mutable.add(surah)
+            current.copy(playbackQueue = mutable)
+        }
+    }
+
+    fun removeFromQueue(surahNumber: Int) {
+        _uiState.update { current ->
+            val mutable = current.playbackQueue.toMutableList()
+            mutable.removeAll { it.number == surahNumber }
+            current.copy(playbackQueue = if (mutable.isEmpty()) QuranData.surahs else mutable)
+        }
+    }
+
+    fun moveQueueItem(fromIndex: Int, toIndex: Int) {
+        _uiState.update { current ->
+            val mutable = current.playbackQueue.toMutableList()
+            if (fromIndex in mutable.indices && toIndex in mutable.indices) {
+                val item = mutable.removeAt(fromIndex)
+                mutable.add(toIndex, item)
+            }
+            current.copy(playbackQueue = mutable)
+        }
+    }
+
+    fun resetQueueToDefault() {
+        _uiState.update { it.copy(playbackQueue = QuranData.surahs) }
+    }
+
+    fun toggleAutoplay() {
+        _uiState.update { it.copy(isAutoplayEnabled = !it.isAutoplayEnabled) }
+    }
+
+    fun toggleShuffle() {
+        _uiState.update { current ->
+            val newShuffle = !current.isShuffleEnabled
+            val newQueue = if (newShuffle) {
+                val currentSurah = current.currentSurah
+                val others = current.playbackQueue.filter { it.number != currentSurah.number }.shuffled()
+                listOf(currentSurah) + others
+            } else {
+                QuranData.surahs
+            }
+            current.copy(isShuffleEnabled = newShuffle, playbackQueue = newQueue)
+        }
+    }
+
+    fun toggleRepeatOne() {
+        _uiState.update { it.copy(isRepeatOne = !it.isRepeatOne) }
     }
 
     fun setSpeed(speed: Float) {
@@ -421,60 +459,48 @@ class AudioPlayerManager(
     }
 
     private fun applyPlaybackSpeed(speed: Float) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && isRecitationPrepared) {
-            try {
-                recitationPlayer?.let {
-                    val params = it.playbackParams
-                    params.speed = speed
-                    it.playbackParams = params
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                recitationPlayer?.let { player ->
+                    if (isRecitationPrepared) {
+                        val params = player.playbackParams
+                        params.speed = speed
+                        player.playbackParams = params
+                    }
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "Could not set playback speed", e)
             }
+        } catch (e: Exception) {
+            Log.w(TAG, "applyPlaybackSpeed failed", e)
         }
     }
 
     fun setAmbientSound(ambient: AmbientSound) {
         _uiState.update { it.copy(ambientSound = ambient) }
-
-        if (ambient.id == "none" || ambient.audioUrl.isBlank()) {
+        if (ambient.id == "none") {
             stopAmbient()
             return
         }
-
         safeReleaseAmbientPlayer()
-
         coroutineScope.launch(Dispatchers.IO) {
             try {
-                val player = MediaPlayer().apply {
-                    setAudioAttributes(
-                        AudioAttributes.Builder()
-                            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                            .setUsage(AudioAttributes.USAGE_MEDIA)
-                            .build()
-                    )
-                    setDataSource(ambient.audioUrl)
-                    isLooping = true
-                    val vol = _uiState.value.ambientVolume
-                    setVolume(vol, vol)
-
-                    setOnPreparedListener {
-                        isAmbientPrepared = true
-                        try {
-                            if (_uiState.value.isPlaying) {
-                                it.start()
-                            }
-                        } catch (e: Exception) {
-                            Log.w(TAG, "Ambient start error", e)
-                        }
+                val player = MediaPlayer()
+                player.setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
+                player.setDataSource(ambient.audioUrl)
+                player.isLooping = true
+                val vol = if (_uiState.value.isMuted) 0f else _uiState.value.ambientVolume
+                player.setVolume(vol, vol)
+                player.setOnPreparedListener { mp ->
+                    isAmbientPrepared = true
+                    if (_uiState.value.isPlaying) {
+                        mp.start()
                     }
-                    setOnErrorListener { _, what, extra ->
-                        Log.w(TAG, "Ambient playback issue: what=$what extra=$extra")
-                        isAmbientPrepared = false
-                        true
-                    }
-                    prepareAsync()
                 }
+                player.prepareAsync()
                 ambientPlayer = player
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load ambient sound", e)
@@ -483,52 +509,54 @@ class AudioPlayerManager(
     }
 
     fun setAmbientVolume(volume: Float) {
-        val clamped = volume.coerceIn(0f, 1f)
-        _uiState.update { it.copy(ambientVolume = clamped) }
+        val vol = volume.coerceIn(0f, 1f)
+        _uiState.update { it.copy(ambientVolume = vol) }
         try {
-            ambientPlayer?.setVolume(clamped, clamped)
+            val finalVol = if (_uiState.value.isMuted) 0f else vol
+            ambientPlayer?.setVolume(finalVol, finalVol)
         } catch (e: Exception) {
-            Log.e(TAG, "Error setting ambient volume", e)
+            Log.w(TAG, "Error setting ambient volume", e)
         }
     }
 
     fun setRecitationVolume(volume: Float) {
-        val clamped = volume.coerceIn(0f, 1f)
-        _uiState.update { it.copy(recitationVolume = clamped) }
+        val vol = volume.coerceIn(0f, 1f)
+        _uiState.update { it.copy(recitationVolume = vol) }
         applyRecitationVolume()
     }
 
     private fun applyRecitationVolume() {
-        val vol = if (_uiState.value.isMuted) 0f else _uiState.value.recitationVolume.coerceIn(0.1f, 1.0f)
         try {
+            val vol = if (_uiState.value.isMuted) 0f else _uiState.value.recitationVolume
             recitationPlayer?.setVolume(vol, vol)
         } catch (e: Exception) {
-            Log.e(TAG, "Error setting recitation volume", e)
+            Log.w(TAG, "applyRecitationVolume error", e)
         }
     }
 
     fun toggleMute() {
-        _uiState.update { it.copy(isMuted = !it.isMuted) }
+        val currentMuted = _uiState.value.isMuted
+        val newMuted = !currentMuted
+        _uiState.update { it.copy(isMuted = newMuted) }
         applyRecitationVolume()
+        setAmbientVolume(_uiState.value.ambientVolume)
     }
 
     private fun ensureAmbientPlaying() {
-        try {
-            if (_uiState.value.ambientSound.id != "none" && isAmbientPrepared) {
-                ambientPlayer?.start()
+        if (_uiState.value.ambientSound.id != "none" && isAmbientPrepared) {
+            try {
+                ambientPlayer?.let { if (!it.isPlaying) it.start() }
+            } catch (e: Exception) {
+                Log.w(TAG, "ensureAmbientPlaying error", e)
             }
-        } catch (e: Exception) {
-            Log.w(TAG, "Ambient play error", e)
         }
     }
 
     private fun pauseAmbient() {
         try {
-            if (isAmbientPrepared) {
-                ambientPlayer?.pause()
-            }
+            ambientPlayer?.let { if (it.isPlaying) it.pause() }
         } catch (e: Exception) {
-            Log.w(TAG, "Ambient pause error", e)
+            Log.w(TAG, "pauseAmbient error", e)
         }
     }
 
@@ -538,65 +566,44 @@ class AudioPlayerManager(
 
     fun setSleepTimer(minutes: Int?) {
         sleepTimerJob?.cancel()
-        if (minutes == null) {
-            _uiState.update { it.copy(sleepTimerMinutes = null, sleepTimerSecondsRemaining = null) }
-            return
-        }
+        _uiState.update { it.copy(sleepTimerMinutes = minutes, sleepTimerSecondsRemaining = null) }
+        if (minutes == null || minutes <= 0) return
 
-        if (minutes == -1) {
-            _uiState.update { it.copy(sleepTimerMinutes = -1, sleepTimerSecondsRemaining = null) }
-            return
-        }
-
-        val totalSeconds = minutes * 60
-        _uiState.update { it.copy(sleepTimerMinutes = minutes, sleepTimerSecondsRemaining = totalSeconds) }
-
-        sleepTimerJob = coroutineScope.launch(Dispatchers.Main) {
-            var remaining = totalSeconds
-            while (isActive && remaining > 0) {
-                delay(1000L)
-                remaining--
-                _uiState.update { it.copy(sleepTimerSecondsRemaining = remaining) }
+        sleepTimerJob = coroutineScope.launch(Dispatchers.Default) {
+            var totalSeconds = minutes * 60
+            while (isActive && totalSeconds > 0) {
+                _uiState.update { it.copy(sleepTimerSecondsRemaining = totalSeconds) }
+                delay(1000)
+                totalSeconds--
             }
-            try {
-                if (recitationPlayer?.isPlaying == true) {
-                    recitationPlayer?.pause()
-                }
-            } catch (_: Exception) {}
-            pauseAmbient()
-            _uiState.update {
-                it.copy(
-                    isPlaying = false,
-                    sleepTimerMinutes = null,
-                    sleepTimerSecondsRemaining = null
-                )
+            if (isActive) {
+                togglePlayPause()
+                clearSleepTimer()
             }
-            stopProgressTracking()
         }
     }
 
     fun clearSleepTimer() {
-        setSleepTimer(null)
+        sleepTimerJob?.cancel()
+        sleepTimerJob = null
+        _uiState.update { it.copy(sleepTimerMinutes = null, sleepTimerSecondsRemaining = null) }
     }
 
     private fun startProgressTracking() {
         progressJob?.cancel()
-        progressJob = coroutineScope.launch(Dispatchers.Main) {
+        progressJob = coroutineScope.launch(Dispatchers.Default) {
             while (isActive) {
-                try {
-                    val player = recitationPlayer
-                    if (player != null && isRecitationPrepared && _uiState.value.isPlaying) {
-                        val current = player.currentPosition.toLong()
-                        val dur = player.duration.toLong().coerceAtLeast(1000L)
-                        _uiState.update {
-                            it.copy(
-                                currentPositionMs = current.coerceIn(0L, dur),
-                                durationMs = dur
-                            )
+                recitationPlayer?.let { player ->
+                    try {
+                        if (isRecitationPrepared && player.isPlaying) {
+                            val pos = player.currentPosition.toLong()
+                            _uiState.update { it.copy(currentPositionMs = pos) }
                         }
+                    } catch (e: Exception) {
+                        // ignore transient position query errors
                     }
-                } catch (_: Exception) {}
-                delay(500L)
+                }
+                delay(400)
             }
         }
     }
@@ -608,7 +615,7 @@ class AudioPlayerManager(
 
     fun release() {
         stopProgressTracking()
-        sleepTimerJob?.cancel()
+        clearSleepTimer()
         safeReleaseRecitationPlayer()
         safeReleaseAmbientPlayer()
     }

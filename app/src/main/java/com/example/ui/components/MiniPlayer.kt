@@ -3,12 +3,10 @@ package com.example.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,13 +15,14 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -36,17 +35,18 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.player.PlayerUiState
-import com.example.ui.theme.TextMuted
-import com.example.ui.theme.TextPrimary
 
 @Composable
 fun MiniPlayer(
     state: PlayerUiState,
-    onExpand: () -> Unit,
-    onTogglePlay: () -> Unit,
+    onTogglePlayPause: () -> Unit,
+    onExpandPlayer: () -> Unit,
     onNext: () -> Unit,
+    onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val surah = state.currentSurah
+    val reciter = state.currentReciter
     val progress = if (state.durationMs > 0) {
         (state.currentPositionMs.toFloat() / state.durationMs.toFloat()).coerceIn(0f, 1f)
     } else 0f
@@ -56,131 +56,104 @@ fun MiniPlayer(
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 6.dp)
             .clip(RoundedCornerShape(20.dp))
-            .background(Color(0xD9101014))
-            .border(1.2.dp, Color(0x40FFFFFF), RoundedCornerShape(20.dp))
-            .clickable { onExpand() }
-            .testTag("mini_player")
+            .background(Color(0xCC111827))
+            .border(1.dp, Color.White.copy(alpha = 0.20f), RoundedCornerShape(20.dp))
+            .clickable { onExpandPlayer() }
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 10.dp),
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Qari Avatar with Surah Badge
-                Box(
-                    modifier = Modifier.size(46.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(44.dp)
-                            .clip(CircleShape)
-                            .border(1.5.dp, Color.White, CircleShape)
-                    ) {
-                        ReciterAvatar(
-                            reciter = state.currentReciter,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-
-                    // Mini Surah Number at Bottom Right
-                    Box(
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .size(18.dp)
-                            .clip(CircleShape)
-                            .background(Color(0xD9000000))
-                            .border(1.dp, Color(0x66FFFFFF), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "${state.currentSurah.number}",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 9.sp
-                        )
-                    }
-                }
+                // Reciter avatar
+                ReciterAvatar(reciter = reciter, size = 44.dp)
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Titles & Reciter
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
+                // Title and details
+                Column(modifier = Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = state.currentSurah.nameEnglish,
-                            color = TextPrimary,
-                            fontWeight = FontWeight.Bold,
+                            text = "${surah.number}. ${surah.nameEnglish}",
+                            color = Color.White,
                             fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
+                        Spacer(modifier = Modifier.width(6.dp))
                         Text(
-                            text = state.currentSurah.nameArabic,
-                            color = Color.White.copy(alpha = 0.9f),
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 13.sp
+                            text = surah.nameArabic,
+                            color = Color.White.copy(alpha = 0.85f),
+                            fontSize = 13.sp,
+                            maxLines = 1
                         )
                     }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text(
-                            text = state.currentReciter.name,
-                            color = TextMuted,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false)
-                        )
-                    }
+                    Text(
+                        text = reciter.name,
+                        color = Color.White.copy(alpha = 0.70f),
+                        fontSize = 12.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
                 }
 
-                // Controls: Clean White circular Play/Stop Button
-                if (state.isBuffering) {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .padding(6.dp),
-                        color = Color.White,
-                        strokeWidth = 2.5.dp
+                // Queue button
+                IconButton(
+                    onClick = onOpenQueue,
+                    modifier = Modifier
+                        .size(36.dp)
+                        .testTag("mini_player_queue_btn")
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                        contentDescription = "Queue / Playlist",
+                        tint = Color.White.copy(alpha = 0.85f),
+                        modifier = Modifier.size(20.dp)
                     )
-                } else {
-                    IconButton(
-                        onClick = onTogglePlay,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .testTag("mini_player_play_pause")
-                    ) {
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+
+                // Play / Pause Button
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color.White)
+                        .clickable { onTogglePlayPause() }
+                        .testTag("mini_player_play_pause_btn"),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (state.isBuffering) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = Color.Black,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
                         Icon(
-                            imageVector = if (state.isPlaying) Icons.Filled.Stop else Icons.Filled.PlayArrow,
-                            contentDescription = if (state.isPlaying) "Stop" else "Play",
-                            tint = Color.White,
-                            modifier = Modifier.size(28.dp)
+                            imageVector = if (state.isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (state.isPlaying) "Pause" else "Play",
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                 }
 
                 Spacer(modifier = Modifier.width(6.dp))
 
+                // Next Button
                 IconButton(
                     onClick = onNext,
                     modifier = Modifier
                         .size(36.dp)
-                        .testTag("mini_player_next")
+                        .testTag("mini_player_next_btn")
                 ) {
                     Icon(
-                        imageVector = Icons.Filled.SkipNext,
+                        imageVector = Icons.Default.SkipNext,
                         contentDescription = "Next Surah",
                         tint = Color.White,
                         modifier = Modifier.size(24.dp)
@@ -188,20 +161,15 @@ fun MiniPlayer(
                 }
             }
 
-            // Bottom Progress Bar Line
-            Box(
+            // Progress bar
+            LinearProgressIndicator(
+                progress = { progress },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(2.5.dp)
-                    .background(Color(0x33FFFFFF))
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth(fraction = progress)
-                        .height(2.5.dp)
-                        .background(Color.White)
-                )
-            }
+                    .height(2.5.dp),
+                color = Color.White,
+                trackColor = Color.White.copy(alpha = 0.15f)
+            )
         }
     }
 }
