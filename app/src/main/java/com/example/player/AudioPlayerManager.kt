@@ -56,7 +56,10 @@ class AudioPlayerManager(
         _uiState.update { it.copy(playbackQueue = QuranData.surahs) }
     }
 
-    private fun requestSystemAudioFocus() {
+    private var hasAudioFocus = false
+
+    private fun requestSystemAudioFocus(): Boolean {
+        if (hasAudioFocus) return true
         try {
             audioManager?.let { am ->
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -64,17 +67,20 @@ class AudioPlayerManager(
                         .setAudioAttributes(
                             AudioAttributes.Builder()
                                 .setUsage(AudioAttributes.USAGE_MEDIA)
-                                .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                                 .build()
                         )
                         .setAcceptsDelayedFocusGain(true)
                         .setOnAudioFocusChangeListener { focusChange ->
                             when (focusChange) {
                                 AudioManager.AUDIOFOCUS_LOSS -> {
-                                    togglePlayPause()
+                                    if (_uiState.value.isPlaying) {
+                                        togglePlayPause()
+                                    }
                                 }
                                 AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
-                                    recitationPlayer?.setVolume(0.2f, 0.2f)
+                                    val currentVol = if (_uiState.value.isMuted) 0f else _uiState.value.recitationVolume
+                                    recitationPlayer?.setVolume(currentVol * 0.3f, currentVol * 0.3f)
                                 }
                                 AudioManager.AUDIOFOCUS_GAIN -> {
                                     applyRecitationVolume()
@@ -83,10 +89,12 @@ class AudioPlayerManager(
                         }
                         .build()
                     audioFocusRequest = focusRequest
-                    am.requestAudioFocus(focusRequest)
+                    val res = am.requestAudioFocus(focusRequest)
+                    hasAudioFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+                    return hasAudioFocus
                 } else {
                     @Suppress("DEPRECATION")
-                    am.requestAudioFocus(
+                    val res = am.requestAudioFocus(
                         { focusChange ->
                             if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
                                 applyRecitationVolume()
@@ -95,11 +103,29 @@ class AudioPlayerManager(
                         AudioManager.STREAM_MUSIC,
                         AudioManager.AUDIOFOCUS_GAIN
                     )
+                    hasAudioFocus = (res == AudioManager.AUDIOFOCUS_REQUEST_GRANTED)
+                    return hasAudioFocus
                 }
             }
         } catch (e: Exception) {
             Log.w(TAG, "Audio focus request issue: ${e.message}")
         }
+        return false
+    }
+
+    private fun abandonSystemAudioFocus() {
+        if (!hasAudioFocus) return
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                audioFocusRequest?.let { audioManager?.abandonAudioFocusRequest(it) }
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager?.abandonAudioFocus(null)
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error abandoning audio focus", e)
+        }
+        hasAudioFocus = false
     }
 
     private fun safeReleaseRecitationPlayer() {
@@ -182,7 +208,7 @@ class AudioPlayerManager(
                 player.setAudioAttributes(
                     AudioAttributes.Builder()
                         .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                         .build()
                 )
 
@@ -223,6 +249,7 @@ class AudioPlayerManager(
                 player.setOnCompletionListener {
                     _uiState.update { it.copy(isPlaying = false, currentPositionMs = 0L) }
                     stopProgressTracking()
+                    abandonSystemAudioFocus()
 
                     val sleepTimer = _uiState.value.sleepTimerMinutes
                     if (sleepTimer != null && sleepTimer == -1) {
@@ -235,6 +262,7 @@ class AudioPlayerManager(
 
                 player.setOnErrorListener { _, what, extra ->
                     Log.w(TAG, "MediaPlayer error: what=$what, extra=$extra")
+                    abandonSystemAudioFocus()
                     if (!useFallback) {
                         usingFallback = true
                         prepareRecitation(surah, reciter, useFallback = true, autoPlay = autoPlay)
@@ -254,6 +282,7 @@ class AudioPlayerManager(
                 recitationPlayer = player
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to initialize recitation player", e)
+                abandonSystemAudioFocus()
                 _uiState.update {
                     it.copy(
                         isBuffering = false,
@@ -278,12 +307,12 @@ class AudioPlayerManager(
                 _uiState.update { it.copy(isPlaying = false) }
                 stopProgressTracking()
                 pauseAmbient()
+                abandonSystemAudioFocus()
             } else {
                 // User wants to RESUME
-                // IMPORTANT BUG FIX: Do NOT call unmuteAndMaximizeVolume / do not touch system volume!
-                // Simply resume MediaPlayer at user's current volume!
                 try {
                     requestSystemAudioFocus()
+                    // Maintain existing steady volume - no artificial boost
                     applyRecitationVolume()
                     player.start()
                     _uiState.update { it.copy(isPlaying = true) }
@@ -614,6 +643,7 @@ class AudioPlayerManager(
     }
 
     fun release() {
+        abandonSystemAudioFocus()
         stopProgressTracking()
         clearSleepTimer()
         safeReleaseRecitationPlayer()

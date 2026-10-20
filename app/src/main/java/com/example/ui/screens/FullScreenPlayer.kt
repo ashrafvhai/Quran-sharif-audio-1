@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Bedtime
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -95,6 +96,7 @@ fun FullScreenPlayer(
     var showVideoSheet by remember { mutableStateOf(false) }
     var showMushafSheet by remember { mutableStateOf(false) }
     var showSpeedSheet by remember { mutableStateOf(false) }
+    var showVolumeSheet by remember { mutableStateOf(false) }
 
     val surah = state.currentSurah
     val reciter = state.currentReciter
@@ -168,16 +170,30 @@ fun FullScreenPlayer(
                     )
                 }
 
-                IconButton(
-                    onClick = { showQueueSheet = true },
-                    modifier = Modifier.testTag("full_player_queue_btn")
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
-                        contentDescription = "Play Queue",
-                        tint = Color.White,
-                        modifier = Modifier.size(26.dp)
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = { showVolumeSheet = true },
+                        modifier = Modifier.testTag("full_player_volume_top_btn")
+                    ) {
+                        Icon(
+                            imageVector = if (state.isMuted) Icons.Default.VolumeMute else Icons.Default.VolumeUp,
+                            contentDescription = "Volume Control",
+                            tint = if (state.isMuted) Color(0xFFEF4444) else Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { showQueueSheet = true },
+                        modifier = Modifier.testTag("full_player_queue_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                            contentDescription = "Play Queue",
+                            tint = Color.White,
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
                 }
             }
 
@@ -409,6 +425,26 @@ fun FullScreenPlayer(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Speed, contentDescription = "Speed", tint = Color.White, modifier = Modifier.size(22.dp))
                         Text("${state.playbackSpeed}x", color = Color.White, fontSize = 10.sp)
+                    }
+                }
+
+                // Volume / Sound Control
+                IconButton(
+                    onClick = { showVolumeSheet = true },
+                    modifier = Modifier.testTag("action_row_volume_btn")
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(
+                            imageVector = if (state.isMuted) Icons.Default.VolumeMute else Icons.Default.VolumeUp,
+                            contentDescription = "Volume",
+                            tint = if (state.isMuted) Color(0xFFEF4444) else Color.White,
+                            modifier = Modifier.size(22.dp)
+                        )
+                        Text(
+                            text = if (state.isMuted) "Muted" else "${(state.recitationVolume * 100).toInt()}%",
+                            color = Color.White,
+                            fontSize = 10.sp
+                        )
                     }
                 }
 
@@ -670,6 +706,133 @@ fun FullScreenPlayer(
                             }
                         }
                     }
+                }
+            }
+        }
+
+        // Volume & Sound Control Sheet
+        if (showVolumeSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showVolumeSheet = false },
+                containerColor = Color(0xFF111827),
+                contentColor = Color.White
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 14.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Sound & Volume Control",
+                                color = Color.White,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "সাউন্ড ও ভলিউম নিয়ন্ত্রণ",
+                                color = Color.White.copy(alpha = 0.65f),
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        IconButton(
+                            onClick = { playerManager.toggleMute() },
+                            modifier = Modifier.testTag("mute_unmute_btn")
+                        ) {
+                            Icon(
+                                imageVector = if (state.isMuted) Icons.Default.VolumeMute else Icons.Default.VolumeUp,
+                                contentDescription = "Mute Toggle",
+                                tint = if (state.isMuted) Color(0xFFEF4444) else Color.White
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Auto Volume Lock Banner
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x2210B981))
+                            .border(1.dp, Color(0xFF10B981).copy(alpha = 0.4f), RoundedCornerShape(12.dp))
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Default.Check,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "স্মার্ট ভলিউম লক সক্রিয়: পজ বা প্লে করলে সাউন্ড নিজে থেকে বাড়ে না।",
+                                color = Color.White.copy(alpha = 0.9f),
+                                fontSize = 11.sp
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(18.dp))
+
+                    // Recitation Volume Slider
+                    Text(
+                        text = "Recitation Volume (কুরআন তিলাওয়াত): ${(state.recitationVolume * 100).toInt()}%",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Slider(
+                        value = if (state.isMuted) 0f else state.recitationVolume,
+                        onValueChange = {
+                            if (state.isMuted) playerManager.toggleMute()
+                            playerManager.setRecitationVolume(it)
+                        },
+                        valueRange = 0f..1f,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color.White,
+                            activeTrackColor = Color(0xFF10B981),
+                            inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                        ),
+                        modifier = Modifier.fillMaxWidth().testTag("recitation_volume_slider")
+                    )
+
+                    Spacer(modifier = Modifier.height(14.dp))
+
+                    // Ambient Nature Volume Slider (if active)
+                    if (state.ambientSound.id != "none") {
+                        Text(
+                            text = "Ambient Nature Volume (${state.ambientSound.name}): ${(state.ambientVolume * 100).toInt()}%",
+                            color = Color.White,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Slider(
+                            value = if (state.isMuted) 0f else state.ambientVolume,
+                            onValueChange = {
+                                if (state.isMuted) playerManager.toggleMute()
+                                playerManager.setAmbientVolume(it)
+                            },
+                            valueRange = 0f..1f,
+                            colors = SliderDefaults.colors(
+                                thumbColor = Color.White,
+                                activeTrackColor = Color(0xFF6366F1),
+                                inactiveTrackColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier.fillMaxWidth().testTag("ambient_volume_slider")
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(14.dp))
                 }
             }
         }
