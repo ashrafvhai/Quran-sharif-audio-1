@@ -1,23 +1,9 @@
 package com.example.data.local
 
 import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
 
-@Database(
-    entities = [
-        FavoriteEntity::class,
-        DownloadEntity::class,
-        PlaylistEntity::class,
-        PlaylistItemEntity::class,
-        RecentHistoryEntity::class
-    ],
-    version = 1,
-    exportSchema = false
-)
-abstract class QuranDatabase : RoomDatabase() {
-    abstract fun quranDao(): QuranDao
+class QuranDatabase(private val dao: QuranDao) {
+    fun quranDao(): QuranDao = dao
 
     companion object {
         @Volatile
@@ -25,11 +11,8 @@ abstract class QuranDatabase : RoomDatabase() {
 
         fun getDatabase(context: Context): QuranDatabase {
             return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    QuranDatabase::class.java,
-                    "easy_quranify_database"
-                ).fallbackToDestructiveMigration().build()
+                val dao = SQLiteQuranDao(context.applicationContext)
+                val instance = QuranDatabase(dao)
                 INSTANCE = instance
                 instance
             }

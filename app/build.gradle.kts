@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.coil.compose)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
+    // Unused room dependencies commented out to optimize APK size:
+    // implementation(libs.androidx.room.runtime)
+    // implementation(libs.androidx.room.ktx)
 }

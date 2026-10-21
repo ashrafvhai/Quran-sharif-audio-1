@@ -20,7 +20,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val database = QuranDatabase.getDatabase(this)
-        repository = QuranRepository(database.quranDao())
+        val quranDao = database.quranDao()
+        repository = QuranRepository(quranDao)
         playerManager = AudioPlayerManager(this, lifecycleScope)
 
         setContent {
@@ -35,6 +36,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        playerManager.release()
+        if (::playerManager.isInitialized) {
+            playerManager.release()
+        }
     }
 }
