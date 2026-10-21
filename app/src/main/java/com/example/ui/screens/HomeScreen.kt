@@ -29,6 +29,9 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.StarBorder
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
@@ -43,7 +46,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -68,10 +73,16 @@ fun HomeScreen(
     onOpenQueue: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
     val favorites by repository.allFavorites.collectAsState(initial = emptyList())
     val favoriteSurahNumbers = remember(favorites) {
         favorites.map { it.surahNumber }.toSet()
+    }
+    val downloads by repository.completedDownloads.collectAsState(initial = emptyList())
+    val downloadedSurahs = remember(downloads, playerState.currentReciter) {
+        downloads.filter { it.reciterId == playerState.currentReciter.id && it.isDownloaded }
+            .map { it.surahNumber }.toSet()
     }
 
     val surahs = remember(searchQuery) {
@@ -279,7 +290,18 @@ fun HomeScreen(
 
                         Spacer(modifier = Modifier.width(8.dp))
 
-                        // Options Menu (Play Next, Add to Queue)
+                        // Downloaded Offline Badge
+                        if (downloadedSurahs.contains(surah.number)) {
+                            Icon(
+                                imageVector = Icons.Default.DownloadDone,
+                                contentDescription = "Offline Available",
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                        }
+
+                        // Options Menu (Play Next, Add to Queue, Download HD)
                         Box {
                             IconButton(
                                 onClick = { showMenu = true },
@@ -311,6 +333,25 @@ fun HomeScreen(
                                         showMenu = false
                                     }
                                 )
+                                if (downloadedSurahs.contains(surah.number)) {
+                                    DropdownMenuItem(
+                                        text = { Text("Remove Download (ডাউনলোড মুছুন)", color = Color(0xFFEF4444)) },
+                                        onClick = {
+                                            coroutineScope.launch {
+                                                repository.removeDownload(surah.number, playerState.currentReciter.id)
+                                            }
+                                            showMenu = false
+                                        }
+                                    )
+                                } else {
+                                    DropdownMenuItem(
+                                        text = { Text("Download HD (এইচডি ডাউনলোড)", color = Color(0xFF10B981)) },
+                                        onClick = {
+                                            repository.downloadSurah(coroutineScope, surah.number, playerState.currentReciter)
+                                            showMenu = false
+                                        }
+                                    )
+                                }
                             }
                         }
                     }

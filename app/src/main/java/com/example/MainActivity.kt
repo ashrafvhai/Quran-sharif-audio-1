@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
 
         val database = QuranDatabase.getDatabase(this)
         val quranDao = database.quranDao()
-        repository = QuranRepository(quranDao)
+        repository = QuranRepository(quranDao, applicationContext)
         playerManager = AudioPlayerManager(this, lifecycleScope)
 
         setContent {

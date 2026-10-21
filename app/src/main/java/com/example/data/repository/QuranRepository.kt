@@ -1,5 +1,6 @@
 package com.example.data.repository
 
+import android.content.Context
 import com.example.data.local.DownloadEntity
 import com.example.data.local.FavoriteEntity
 import com.example.data.local.PlaylistEntity
@@ -11,15 +12,21 @@ import com.example.data.model.ReciterData
 import com.example.data.model.Surah
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.FileOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.util.Locale
 import java.util.UUID
 
-class QuranRepository(private val quranDao: QuranDao) {
+class QuranRepository(
+    private val quranDao: QuranDao,
+    private val context: Context? = null
+) {
     val allFavorites: Flow<List<FavoriteEntity>> = quranDao.getAllFavorites().flowOn(Dispatchers.IO)
     val recentHistory: Flow<List<RecentHistoryEntity>> = quranDao.getRecentHistory().flowOn(Dispatchers.IO)
     val completedDownloads: Flow<List<DownloadEntity>> = quranDao.getCompletedDownloads().flowOn(Dispatchers.IO)
@@ -52,25 +59,123 @@ class QuranRepository(private val quranDao: QuranDao) {
         }
     }
 
-    fun startDownloadSimulation(scope: CoroutineScope, surahNumber: Int, reciterId: String) {
+    /**
+     * Real online downloader: Downloads the high-definition studio audio directly
+     * from the reciter's CDN into app internal storage for 100% offline playback.
+     */
+    fun downloadSurah(scope: CoroutineScope, surahNumber: Int, reciter: Reciter) {
         scope.launch(Dispatchers.IO) {
-            for (p in 1..10) {
+            try {
                 quranDao.setDownload(
                     DownloadEntity(
                         surahNumber = surahNumber,
-                        reciterId = reciterId,
-                        isDownloaded = p == 10,
-                        progress = p / 10f
+                        reciterId = reciter.id,
+                        isDownloaded = false,
+                        progress = 0.05f
                     )
                 )
-                delay(200)
+
+                val audioDir = if (context != null) File(context.filesDir, "audio") else null
+                if (audioDir != null && !audioDir.exists()) {
+                    audioDir.mkdirs()
+                }
+
+                val primaryUrl = reciter.getAudioUrl(surahNumber)
+                var connection = (URL(primaryUrl).openConnection() as HttpURLConnection).apply {
+                    connectTimeout = 15000
+                    readTimeout = 30000
+                    instanceFollowRedirects = true
+                }
+                connection.connect()
+
+                if (connection.responseCode in 300..399) {
+                    val redirectUrl = connection.getHeaderField("Location")
+                    if (!redirectUrl.isNullOrEmpty()) {
+                        connection.disconnect()
+                        connection = (URL(redirectUrl).openConnection() as HttpURLConnection).apply {
+                            connectTimeout = 15000
+                            readTimeout = 30000
+                        }
+                        connection.connect()
+                    }
+                }
+
+                if (connection.responseCode !in 200..299) {
+                    // Try fallback
+                    connection.disconnect()
+                    val fallbackUrl = reciter.getFallbackAudioUrl(surahNumber)
+                    connection = (URL(fallbackUrl).openConnection() as HttpURLConnection).apply {
+                        connectTimeout = 15000
+                        readTimeout = 30000
+                        instanceFollowRedirects = true
+                    }
+                    connection.connect()
+                }
+
+                val totalLength = connection.contentLengthLong
+                val targetFile = if (audioDir != null) File(audioDir, "surah_${surahNumber}_${reciter.id}.mp3") else null
+                val tempFile = if (audioDir != null) File(audioDir, "surah_${surahNumber}_${reciter.id}.tmp") else null
+
+                if (tempFile != null && targetFile != null) {
+                    connection.inputStream.use { input ->
+                        FileOutputStream(tempFile).use { output ->
+                            val buffer = ByteArray(16384)
+                            var read: Int
+                            var totalRead = 0L
+                            var lastReportTime = System.currentTimeMillis()
+
+                            while (input.read(buffer).also { read = it } != -1) {
+                                output.write(buffer, 0, read)
+                                totalRead += read
+
+                                val now = System.currentTimeMillis()
+                                if (now - lastReportTime > 300 && totalLength > 0) {
+                                    val prog = (totalRead.toFloat() / totalLength.toFloat()).coerceIn(0.05f, 0.95f)
+                                    quranDao.setDownload(
+                                        DownloadEntity(
+                                            surahNumber = surahNumber,
+                                            reciterId = reciter.id,
+                                            isDownloaded = false,
+                                            progress = prog
+                                        )
+                                    )
+                                    lastReportTime = now
+                                }
+                            }
+                        }
+                    }
+
+                    if (targetFile.exists()) targetFile.delete()
+                    tempFile.renameTo(targetFile)
+
+                    quranDao.setDownload(
+                        DownloadEntity(
+                            surahNumber = surahNumber,
+                            reciterId = reciter.id,
+                            isDownloaded = true,
+                            progress = 1.0f
+                        )
+                    )
+                }
+                connection.disconnect()
+            } catch (e: Exception) {
+                android.util.Log.e("QuranRepository", "Error downloading surah $surahNumber", e)
+                quranDao.deleteDownload(surahNumber, reciter.id)
             }
         }
     }
 
     suspend fun removeDownload(surahNumber: Int, reciterId: String) {
         withContext(Dispatchers.IO) {
-            quranDao.deleteDownload(surahNumber, reciterId)
+            try {
+                if (context != null) {
+                    val file = File(context.filesDir, "audio/surah_${surahNumber}_${reciterId}.mp3")
+                    if (file.exists()) file.delete()
+                }
+                quranDao.deleteDownload(surahNumber, reciterId)
+            } catch (e: Exception) {
+                android.util.Log.e("QuranRepository", "Error removing download", e)
+            }
         }
     }
 

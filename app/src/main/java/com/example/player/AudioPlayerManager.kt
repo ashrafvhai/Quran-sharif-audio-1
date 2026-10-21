@@ -8,7 +8,7 @@ import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
 import android.util.Log
-import com.example.R
+import java.io.File
 import com.example.data.model.AmbientSound
 import com.example.data.model.AmbientSoundData
 import com.example.data.model.QuranData
@@ -212,13 +212,9 @@ class AudioPlayerManager(
                         .build()
                 )
 
-                if (surah.number == 1 && !useFallback) {
-                    try {
-                        val uri = Uri.parse("android.resource://${context.packageName}/${R.raw.audio_fatihah}")
-                        player.setDataSource(context, uri)
-                    } catch (e: Exception) {
-                        player.setDataSource(url)
-                    }
+                val localAudioFile = File(context.filesDir, "audio/surah_${surah.number}_${reciter.id}.mp3")
+                if (localAudioFile.exists() && localAudioFile.length() > 5000L) {
+                    player.setDataSource(localAudioFile.absolutePath)
                 } else {
                     player.setDataSource(url)
                 }

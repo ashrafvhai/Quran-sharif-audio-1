@@ -23,8 +23,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.DownloadDone
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.PlayArrow
+import com.example.data.model.ReciterData
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -66,6 +69,7 @@ fun PlaylistsScreen(
     val coroutineScope = rememberCoroutineScope()
     val playlists by repository.allPlaylists.collectAsState(initial = emptyList())
     val favorites by repository.allFavorites.collectAsState(initial = emptyList())
+    val completedDownloads by repository.completedDownloads.collectAsState(initial = emptyList())
     var showCreateDialog by remember { mutableStateOf(false) }
     var newPlaylistTitle by remember { mutableStateOf("") }
 
@@ -167,6 +171,60 @@ fun PlaylistsScreen(
                                 Text("${surah.number}. ${surah.nameEnglish}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                                 Text(surah.nameArabic, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
                             }
+                            Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
+                        }
+                    }
+                }
+            }
+
+            // Downloaded Offline Surahs section
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.DownloadDone, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("Downloaded Surahs (অফলাইন সুরাসমূহ)", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            if (completedDownloads.isEmpty()) {
+                item {
+                    Text("No surahs downloaded for offline yet. You can stream any surah online or download for offline from the Home tab.", color = Color.White.copy(alpha = 0.4f), fontSize = 12.sp, modifier = Modifier.padding(vertical = 6.dp))
+                }
+            } else {
+                items(completedDownloads) { dl ->
+                    val surah = QuranData.getByNumber(dl.surahNumber)
+                    val reciter = ReciterData.getById(dl.reciterId)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0x14FFFFFF))
+                            .clickable {
+                                playerManager.playSurah(surah, reciter, startPlaying = true)
+                            }
+                            .padding(12.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.DownloadDone, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("${surah.number}. ${surah.nameEnglish}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                Text("${reciter.name} • Offline HD", color = Color(0xFF10B981).copy(alpha = 0.8f), fontSize = 11.sp)
+                            }
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        repository.removeDownload(dl.surahNumber, dl.reciterId)
+                                    }
+                                },
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
                             Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
                         }
                     }
