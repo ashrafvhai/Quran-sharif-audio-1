@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Autorenew
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material3.Icon
@@ -69,9 +70,9 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 120.dp)
         ) {
-            // Continuous Autoplay Setting
+            // Background Audio info
             item {
-                Text("Playback Preferences", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text("Playback & Background Audio", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Box(
@@ -84,31 +85,33 @@ fun SettingsScreen(
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Autorenew, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(20.dp))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text("Continuous Autoplay", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                "একটি সুরা শেষ হলে স্বয়ংক্রিয়ভাবে পরবর্তী সুরা চালু হবে যতক্ষণ না আপনি থামান।",
-                                color = Color.White.copy(alpha = 0.65f),
-                                fontSize = 12.sp
+                        Box(
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(CircleShape)
+                                .background(Color(0x2E10B981)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.GraphicEq,
+                                contentDescription = null,
+                                tint = Color(0xFF10B981),
+                                modifier = Modifier.size(20.dp)
                             )
                         }
-
-                        Switch(
-                            checked = playerState.isAutoplayEnabled,
-                            onCheckedChange = { playerManager.toggleAutoplay() },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = Color.White,
-                                checkedTrackColor = Color(0xFF10B981)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Background Audio & Controls", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Spacer(modifier = Modifier.height(3.dp))
+                            Text(
+                                "অ্যাপ মিনিমাইজ বা স্ক্রিন বন্ধ করলেও ব্যাকগ্রাউন্ডে অবিরাম তিলাওয়াত চলবে এবং নোটিফিকেশন বার থেকে সহজে নিয়ন্ত্রণ করা যাবে।",
+                                color = Color.White.copy(alpha = 0.65f),
+                                fontSize = 11.sp,
+                                lineHeight = 15.sp
                             )
-                        )
+                        }
                     }
                 }
             }

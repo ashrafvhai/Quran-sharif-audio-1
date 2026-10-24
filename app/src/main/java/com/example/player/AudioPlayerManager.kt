@@ -7,6 +7,7 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
 import java.io.File
 import com.example.data.model.AmbientSound
@@ -18,6 +19,7 @@ import com.example.data.model.Surah
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,13 +28,56 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
-class AudioPlayerManager(
-    private val context: Context,
-    private val coroutineScope: CoroutineScope
+class AudioPlayerManager private constructor(
+    private val context: Context
 ) {
+    companion object {
+        @Volatile
+        private var INSTANCE: AudioPlayerManager? = null
+
+        fun getInstance(context: Context): AudioPlayerManager {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: AudioPlayerManager(context.applicationContext).also {
+                    INSTANCE = it
+                }
+            }
+        }
+    }
+
+    private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val TAG = "AudioPlayerManager"
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
+
+    private var wakeLock: PowerManager.WakeLock? = null
+
+    private fun acquireWakeLock() {
+        try {
+            if (wakeLock == null) {
+                val powerManager = context.getSystemService(Context.POWER_SERVICE) as? PowerManager
+                wakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "EasyQuranify:PlaybackWakeLock")
+            }
+            wakeLock?.let {
+                if (!it.isHeld) {
+                    it.acquire(3 * 60 * 60 * 1000L) // 3 hours timeout
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error acquiring wake lock", e)
+        }
+    }
+
+    private fun releaseWakeLock() {
+        try {
+            wakeLock?.let {
+                if (it.isHeld) {
+                    it.release()
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Error releasing wake lock", e)
+        }
+    }
 
     private val _uiState = MutableStateFlow(PlayerUiState())
     val uiState: StateFlow<PlayerUiState> = _uiState.asStateFlow()
@@ -236,6 +281,8 @@ class AudioPlayerManager(
                     if (autoPlay) {
                         requestSystemAudioFocus()
                         applyRecitationVolume()
+                        acquireWakeLock()
+                        AudioPlayerService.startService(context)
                         mp.start()
                         startProgressTracking()
                         ensureAmbientPlaying()
@@ -245,13 +292,14 @@ class AudioPlayerManager(
                 player.setOnCompletionListener {
                     _uiState.update { it.copy(isPlaying = false, currentPositionMs = 0L) }
                     stopProgressTracking()
+                    releaseWakeLock()
                     abandonSystemAudioFocus()
 
                     val sleepTimer = _uiState.value.sleepTimerMinutes
                     if (sleepTimer != null && sleepTimer == -1) {
                         clearSleepTimer()
                     } else if (_uiState.value.isAutoplayEnabled) {
-                        // CONTINUOUS AUTOPLAY: Play the next audio in queue automatically!
+                        // CONTINUOUS AUTOPLAY: Play the next audio in queue automatically even in background!
                         playNext()
                     }
                 }
@@ -303,6 +351,7 @@ class AudioPlayerManager(
                 _uiState.update { it.copy(isPlaying = false) }
                 stopProgressTracking()
                 pauseAmbient()
+                releaseWakeLock()
                 abandonSystemAudioFocus()
             } else {
                 // User wants to RESUME
@@ -310,6 +359,8 @@ class AudioPlayerManager(
                     requestSystemAudioFocus()
                     // Maintain existing steady volume - no artificial boost
                     applyRecitationVolume()
+                    acquireWakeLock()
+                    AudioPlayerService.startService(context)
                     player.start()
                     _uiState.update { it.copy(isPlaying = true) }
                     startProgressTracking()
@@ -639,6 +690,8 @@ class AudioPlayerManager(
     }
 
     fun release() {
+        releaseWakeLock()
+        AudioPlayerService.stopService(context)
         abandonSystemAudioFocus()
         stopProgressTracking()
         clearSleepTimer()

@@ -1,5 +1,6 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,12 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.Autorenew
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.GraphicEq
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.PlayArrow
@@ -52,13 +55,19 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import com.example.data.model.QuranData
+import com.example.data.model.Reciter
+import com.example.data.model.ReciterData
 import com.example.data.model.Surah
 import com.example.data.repository.QuranRepository
 import com.example.player.AudioPlayerManager
@@ -135,51 +144,163 @@ fun HomeScreen(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
 
-        // Autoplay Status Banner (One-click toggle)
+        // Side-scrollable Reciters Carousel (Featured Qaris with large images)
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(if (playerState.isAutoplayEnabled) Color(0x2210B981) else Color(0x1AFFFFFF))
-                .border(
-                    1.dp,
-                    if (playerState.isAutoplayEnabled) Color(0xFF10B981).copy(alpha = 0.4f) else Color.White.copy(alpha = 0.1f),
-                    RoundedCornerShape(12.dp)
-                )
-                .clickable { playerManager.toggleAutoplay() }
-                .padding(horizontal = 14.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Autorenew,
-                    contentDescription = null,
-                    tint = if (playerState.isAutoplayEnabled) Color(0xFF10B981) else Color.White.copy(alpha = 0.6f),
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
+            Column {
                 Text(
-                    text = if (playerState.isAutoplayEnabled)
-                        "Autoplay: ON (একটির পর একটি চলবে)"
-                    else
-                        "Autoplay: OFF (বর্তমান সুরা শেষ হলে থামবে)",
+                    text = "Featured Qaris (প্রখ্যাত ক্বারীগণ)",
                     color = Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
+                    fontSize = 15.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    text = "সোয়াইপ করে পছন্দের ক্বারীর তিলাওয়াত শুনুন",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 11.sp
                 )
             }
             Text(
-                text = if (playerState.isAutoplayEnabled) "Active ✓" else "Inactive",
-                color = if (playerState.isAutoplayEnabled) Color(0xFF10B981) else Color.White.copy(alpha = 0.5f),
+                text = "${ReciterData.reciters.size} Reciters",
+                color = Color(0xFF10B981),
                 fontSize = 11.sp,
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.SemiBold
             )
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .testTag("home_reciters_carousel"),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(ReciterData.reciters, key = { it.id }) { reciter ->
+                val isSelected = playerState.currentReciter.id == reciter.id
+                val isPlayingNow = isSelected && playerState.isPlaying
+
+                Box(
+                    modifier = Modifier
+                        .width(148.dp)
+                        .height(205.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(Color(0xFF111827))
+                        .border(
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(18.dp)
+                        )
+                        .clickable {
+                            playerManager.switchReciter(reciter)
+                        }
+                        .testTag("reciter_card_${reciter.id}")
+                ) {
+                    // Reciter Photo
+                    if (reciter.localDrawableRes != null) {
+                        Image(
+                            painter = painterResource(id = reciter.localDrawableRes),
+                            contentDescription = reciter.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    } else if (reciter.avatarUrl.isNotEmpty()) {
+                        AsyncImage(
+                            model = reciter.avatarUrl,
+                            contentDescription = reciter.name,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+
+                    // Scrim gradient over image
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.3f),
+                                        Color.Black.copy(alpha = 0.85f),
+                                        Color.Black.copy(alpha = 0.98f)
+                                    ),
+                                    startY = 50f
+                                )
+                            )
+                    )
+
+                    // Top badge for Active status
+                    if (isSelected) {
+                        Row(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(8.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color(0xE610B981))
+                                .padding(horizontal = 7.dp, vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (isPlayingNow) Icons.Default.GraphicEq else Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.size(12.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isPlayingNow) "Playing" else "Active",
+                                color = Color.White,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+
+                    // Bottom info (Arabic, Name, Country)
+                    Column(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .fillMaxWidth()
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = reciter.arabicName,
+                            color = Color(0xFFFDE047),
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = reciter.name,
+                            color = Color.White,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            lineHeight = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = reciter.country,
+                            color = Color.White.copy(alpha = 0.7f),
+                            fontSize = 10.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(14.dp))
 
         // Search Bar
         OutlinedTextField(
