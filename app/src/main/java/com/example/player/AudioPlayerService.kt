@@ -13,6 +13,10 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
 import com.example.R
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.support.v4.media.session.MediaSessionCompat
+import androidx.media.app.NotificationCompat.MediaStyle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -59,9 +63,17 @@ class AudioPlayerService : Service() {
 
     private val serviceScope = CoroutineScope(Dispatchers.Main + Job())
     private var stateJob: Job? = null
+    private var mediaSession: MediaSessionCompat? = null
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            mediaSession = MediaSessionCompat(this, "QuranMediaSession").apply {
+                isActive = true
+            }
+        } catch (e: Exception) {
+            android.util.Log.w("AudioPlayerService", "Error initializing MediaSessionCompat", e)
+        }
         createNotificationChannel()
         observeState()
     }
@@ -147,23 +159,47 @@ class AudioPlayerService : Service() {
         val stopIntent = Intent(this, AudioPlayerService::class.java).apply { action = ACTION_STOP }
         val stopPending = PendingIntent.getService(this, 4, stopIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
 
-        val playPauseIcon = if (isPlaying) android.R.drawable.ic_media_pause else android.R.drawable.ic_media_play
-        val playPauseText = if (isPlaying) "Pause" else "Play"
+        val playPauseIcon = if (isPlaying) R.drawable.ic_notif_pause else R.drawable.ic_notif_play
+        val playPauseText = if (isPlaying) "⏸ Pause" else "▶ Play"
 
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        // Qari large avatar image
+        val largeIconBitmap: Bitmap? = try {
+            if (reciter.localDrawableRes != null) {
+                BitmapFactory.decodeResource(resources, reciter.localDrawableRes)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+
+        // MediaStyle notification for native music player controls
+        val mediaStyle = MediaStyle()
+            .setShowActionsInCompactView(0, 1, 2)
+        mediaSession?.sessionToken?.let { token ->
+            mediaStyle.setMediaSession(token)
+        }
+
+        val notificationBuilder = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("${surah.number}. ${surah.nameEnglish} • ${surah.nameArabic}")
-            .setContentText("${reciter.name} (HD Recitation)")
+            .setContentText("${reciter.name} (${reciter.country})")
             .setSubText("Easy Quranify")
             .setContentIntent(openAppPendingIntent)
             .setOngoing(isPlaying)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setPriority(NotificationCompat.PRIORITY_LOW)
-            .addAction(android.R.drawable.ic_media_previous, "Previous", prevPending)
+            .setStyle(mediaStyle)
+            .addAction(R.drawable.ic_notif_prev, "⏮ Prev", prevPending)
             .addAction(playPauseIcon, playPauseText, playPausePending)
-            .addAction(android.R.drawable.ic_media_next, "Next", nextPending)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Close", stopPending)
-            .build()
+            .addAction(R.drawable.ic_notif_next, "⏭ Next", nextPending)
+            .addAction(R.drawable.ic_notif_close, "✕ Close", stopPending)
+
+        if (largeIconBitmap != null) {
+            notificationBuilder.setLargeIcon(largeIconBitmap)
+        }
+
+        val notification = notificationBuilder.build()
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -188,6 +224,12 @@ class AudioPlayerService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stateJob?.cancel()
+        try {
+            mediaSession?.release()
+            mediaSession = null
+        } catch (e: Exception) {
+            android.util.Log.w("AudioPlayerService", "Error releasing mediaSession", e)
+        }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null

@@ -3,9 +3,13 @@ package com.example.ui.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -197,27 +201,110 @@ fun FullScreenPlayer(
                 }
             }
 
-            Spacer(modifier = Modifier.weight(0.4f))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Surah Big Typography
+            // Large Qari Portrait Card (The user specifically asked for large reciter image during audio play)
+            Box(
+                modifier = Modifier
+                    .size(200.dp)
+                    .clip(RoundedCornerShape(26.dp))
+                    .background(Color(0xFF111827))
+                    .border(2.dp, Color(0xFF10B981).copy(alpha = 0.6f), RoundedCornerShape(26.dp))
+                    .clickable { showReciterSheet = true }
+                    .testTag("full_player_qari_large_photo"),
+                contentAlignment = Alignment.Center
+            ) {
+                if (reciter.localDrawableRes != null) {
+                    Image(
+                        painter = painterResource(id = reciter.localDrawableRes),
+                        contentDescription = reciter.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                } else if (reciter.avatarUrl.isNotEmpty()) {
+                    AsyncImage(
+                        model = reciter.avatarUrl,
+                        contentDescription = reciter.name,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                // Scrim vignette at the bottom of the photo card
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.2f),
+                                    Color.Black.copy(alpha = 0.85f)
+                                ),
+                                startY = 120f
+                            )
+                        )
+                )
+
+                // Bottom badge on the image card
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(horizontal = 10.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = reciter.arabicName,
+                        color = Color(0xFFFDE047),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(6.dp))
+                            .background(Color(0xCC10B981))
+                            .padding(horizontal = 6.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.GraphicEq,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(10.dp)
+                        )
+                        Spacer(modifier = Modifier.width(3.dp))
+                        Text("HD Qari", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Surah Arabic Typography
             Text(
                 text = surah.nameArabic,
                 color = Color.White,
-                fontSize = 44.sp,
+                fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(6.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Text(
-                text = surah.nameTranslation,
-                color = Color.White.copy(alpha = 0.75f),
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center
+                text = "${surah.number}. ${surah.nameEnglish} • ${surah.nameTranslation}",
+                color = Color.White.copy(alpha = 0.8f),
+                fontSize = 14.sp,
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(10.dp))
 
             // Reciter Badge (clickable)
             Row(
@@ -229,12 +316,12 @@ fun FullScreenPlayer(
                     .padding(horizontal = 14.dp, vertical = 6.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ReciterAvatar(reciter = reciter, size = 30.dp)
+                ReciterAvatar(reciter = reciter, size = 26.dp)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = reciter.name,
+                    text = "${reciter.name} (${reciter.country})",
                     color = Color.White,
-                    fontSize = 13.sp,
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Spacer(modifier = Modifier.width(4.dp))
@@ -242,37 +329,39 @@ fun FullScreenPlayer(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
                     tint = Color.White.copy(alpha = 0.7f),
-                    modifier = Modifier.size(18.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             }
 
             // Sample Ayah Display
             if (surah.sampleAyahArabic.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(16.dp))
+                        .clip(RoundedCornerShape(14.dp))
                         .background(Color(0x2B000000))
-                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
-                        .padding(16.dp)
+                        .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(14.dp))
+                        .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
                             text = surah.sampleAyahArabic,
                             color = Color.White,
-                            fontSize = 17.sp,
+                            fontSize = 15.sp,
                             textAlign = TextAlign.Center,
-                            lineHeight = 26.sp
+                            lineHeight = 22.sp
                         )
                         if (surah.sampleAyahEnglish.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
                                 text = surah.sampleAyahEnglish,
                                 color = Color.White.copy(alpha = 0.75f),
-                                fontSize = 12.sp,
+                                fontSize = 11.sp,
                                 textAlign = TextAlign.Center,
-                                lineHeight = 18.sp
+                                lineHeight = 16.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -493,40 +582,101 @@ fun FullScreenPlayer(
             )
         }
 
-        // Reciter Selection Sheet
+        // Reciter Selection Sheet (Large Qari Portraits)
         if (showReciterSheet) {
             ModalBottomSheet(
                 onDismissRequest = { showReciterSheet = false },
                 containerColor = Color(0xFF111827),
                 contentColor = Color.White
             ) {
-                Column(modifier = Modifier.fillMaxWidth().padding(18.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp)) {
                     Text("Select Reciter (ক্বারী নির্বাচন)", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    LazyColumn(modifier = Modifier.fillMaxWidth().height(360.dp)) {
+                    Text("সুললিত কণ্ঠের বিশিষ্ট ১০ জন বিশ্বখ্যাত ক্বারী", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                    Spacer(modifier = Modifier.height(14.dp))
+                    LazyColumn(modifier = Modifier.fillMaxWidth().height(420.dp)) {
                         items(ReciterData.reciters) { qari ->
                             val isSelected = qari.id == reciter.id
-                            Row(
+                            Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(vertical = 5.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(if (isSelected) Color(0x33FFFFFF) else Color(0x14FFFFFF))
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(if (isSelected) Color(0x3310B981) else Color(0x14FFFFFF))
+                                    .border(
+                                        width = if (isSelected) 1.5.dp else 1.dp,
+                                        color = if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.1f),
+                                        shape = RoundedCornerShape(16.dp)
+                                    )
                                     .clickable {
                                         playerManager.switchReciter(qari)
                                         showReciterSheet = false
                                     }
-                                    .padding(12.dp),
-                                verticalAlignment = Alignment.CenterVertically
+                                    .padding(10.dp)
                             ) {
-                                ReciterAvatar(reciter = qari, size = 44.dp)
-                                Spacer(modifier = Modifier.width(12.dp))
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(qari.name, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                    Text("${qari.arabicName} • ${qari.country}", color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
-                                }
-                                if (isSelected) {
-                                    Icon(Icons.Default.GraphicEq, contentDescription = null, tint = Color.White)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    // Large 72dp Reciter photo
+                                    Box(
+                                        modifier = Modifier
+                                            .size(72.dp)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .border(1.dp, Color.White.copy(alpha = 0.2f), RoundedCornerShape(14.dp))
+                                    ) {
+                                        if (qari.localDrawableRes != null) {
+                                            Image(
+                                                painter = painterResource(id = qari.localDrawableRes),
+                                                contentDescription = qari.name,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        } else if (qari.avatarUrl.isNotEmpty()) {
+                                            AsyncImage(
+                                                model = qari.avatarUrl,
+                                                contentDescription = qari.name,
+                                                modifier = Modifier.fillMaxSize(),
+                                                contentScale = ContentScale.Crop
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(modifier = Modifier.width(14.dp))
+
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = qari.name,
+                                            color = Color.White,
+                                            fontSize = 14.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                        Text(
+                                            text = qari.arabicName,
+                                            color = Color(0xFFFDE047),
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 1
+                                        )
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(
+                                            text = "${qari.country} • ${qari.style}",
+                                            color = Color.White.copy(alpha = 0.65f),
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    }
+
+                                    if (isSelected) {
+                                        Icon(
+                                            imageVector = Icons.Default.GraphicEq,
+                                            contentDescription = "Active",
+                                            tint = Color(0xFF10B981),
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -1,8 +1,12 @@
 package com.example.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,9 +141,36 @@ fun RecitersScreen(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ReciterAvatar(reciter = qari, size = 52.dp)
+                        // Large Qari Portrait
+                        Box(
+                            modifier = Modifier
+                                .size(84.dp)
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(Color(0xFF1E293B))
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                        ) {
+                            if (qari.localDrawableRes != null) {
+                                Image(
+                                    painter = painterResource(id = qari.localDrawableRes),
+                                    contentDescription = qari.name,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            } else if (qari.avatarUrl.isNotEmpty()) {
+                                AsyncImage(
+                                    model = qari.avatarUrl,
+                                    contentDescription = qari.name,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop
+                                )
+                            }
+                        }
 
-                        Spacer(modifier = Modifier.width(14.dp))
+                        Spacer(modifier = Modifier.width(16.dp))
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
@@ -151,16 +182,25 @@ fun RecitersScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "${qari.arabicName} • ${qari.country}",
-                                color = Color.White.copy(alpha = 0.7f),
-                                fontSize = 12.sp,
+                                text = qari.arabicName,
+                                color = Color(0xFFFDE047),
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
                                 maxLines = 1
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "${qari.style} • ${qari.listenerCount}",
-                                color = Color.White.copy(alpha = 0.5f),
+                                text = "${qari.country} • ${qari.style}",
+                                color = Color.White.copy(alpha = 0.7f),
                                 fontSize = 11.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                            Text(
+                                text = qari.listenerCount,
+                                color = Color(0xFF10B981),
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.Medium,
                                 maxLines = 1
                             )
                         }
