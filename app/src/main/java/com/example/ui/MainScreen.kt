@@ -18,6 +18,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import com.example.data.localization.LanguageManager
 import com.example.data.repository.QuranRepository
 import com.example.player.AudioPlayerManager
 import com.example.ui.components.AppTab
@@ -26,6 +28,7 @@ import com.example.ui.components.MiniPlayer
 import com.example.ui.components.SurahQueueSheet
 import com.example.ui.screens.FullScreenPlayer
 import com.example.ui.screens.HomeScreen
+import com.example.ui.screens.LanguageSelectionScreen
 import com.example.ui.screens.PlaylistsScreen
 import com.example.ui.screens.RecitersScreen
 import com.example.ui.screens.SettingsScreen
@@ -38,82 +41,101 @@ fun MainScreen(
     playerManager: AudioPlayerManager,
     repository: QuranRepository
 ) {
+    val context = LocalContext.current
+    val isFirstLaunch by LanguageManager.isFirstLaunch.collectAsState()
+    val currentLanguage by LanguageManager.currentLanguage.collectAsState()
+
     val playerState by playerManager.uiState.collectAsState()
     var selectedTab by remember { mutableStateOf(AppTab.HOME) }
     var isPlayerExpanded by remember { mutableStateOf(false) }
     var showQueueSheet by remember { mutableStateOf(false) }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        // Tab Content
-        Box(modifier = Modifier.fillMaxSize()) {
-            when (selectedTab) {
-                AppTab.HOME -> HomeScreen(
-                    playerState = playerState,
-                    playerManager = playerManager,
-                    repository = repository,
+    if (isFirstLaunch) {
+        LanguageSelectionScreen(
+            initialLanguage = currentLanguage,
+            onLanguageConfirmed = { chosenLang ->
+                LanguageManager.completeFirstLaunch(context, chosenLang)
+            }
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            // Tab Content
+            Box(modifier = Modifier.fillMaxSize()) {
+                when (selectedTab) {
+                    AppTab.HOME -> HomeScreen(
+                        playerState = playerState,
+                        playerManager = playerManager,
+                        repository = repository,
+                        onOpenQueue = { showQueueSheet = true },
+                        language = currentLanguage
+                    )
+                    AppTab.RECITERS -> RecitersScreen(
+                        playerState = playerState,
+                        playerManager = playerManager,
+                        language = currentLanguage
+                    )
+                    AppTab.PLAYLISTS -> PlaylistsScreen(
+                        playerState = playerState,
+                        playerManager = playerManager,
+                        repository = repository,
+                        onOpenQueue = { showQueueSheet = true },
+                        language = currentLanguage
+                    )
+                    AppTab.SETTINGS -> SettingsScreen(
+                        playerState = playerState,
+                        playerManager = playerManager,
+                        language = currentLanguage
+                    )
+                }
+            }
+
+            // Bottom Controls: MiniPlayer + BottomNavBar
+            Column(
+                modifier = Modifier.align(Alignment.BottomCenter)
+            ) {
+                // MiniPlayer
+                MiniPlayer(
+                    state = playerState,
+                    onTogglePlayPause = { playerManager.togglePlayPause() },
+                    onExpandPlayer = { isPlayerExpanded = true },
+                    onNext = { playerManager.playNext() },
                     onOpenQueue = { showQueueSheet = true }
                 )
-                AppTab.RECITERS -> RecitersScreen(
-                    playerState = playerState,
-                    playerManager = playerManager
-                )
-                AppTab.PLAYLISTS -> PlaylistsScreen(
-                    playerState = playerState,
-                    playerManager = playerManager,
-                    repository = repository,
-                    onOpenQueue = { showQueueSheet = true }
-                )
-                AppTab.SETTINGS -> SettingsScreen(
-                    playerState = playerState,
-                    playerManager = playerManager
+
+                // Bottom Navigation Bar
+                BottomNavBar(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it },
+                    language = currentLanguage
                 )
             }
-        }
 
-        // Bottom Controls: MiniPlayer + BottomNavBar
-        Column(
-            modifier = Modifier.align(Alignment.BottomCenter)
-        ) {
-            // MiniPlayer
-            MiniPlayer(
-                state = playerState,
-                onTogglePlayPause = { playerManager.togglePlayPause() },
-                onExpandPlayer = { isPlayerExpanded = true },
-                onNext = { playerManager.playNext() },
-                onOpenQueue = { showQueueSheet = true }
-            )
+            // Full Screen Player Modal
+            AnimatedVisibility(
+                visible = isPlayerExpanded,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
+                FullScreenPlayer(
+                    state = playerState,
+                    playerManager = playerManager,
+                    onDismiss = { isPlayerExpanded = false },
+                    language = currentLanguage
+                )
+            }
 
-            // Bottom Navigation Bar
-            BottomNavBar(
-                selectedTab = selectedTab,
-                onTabSelected = { selectedTab = it }
-            )
-        }
-
-        // Full Screen Player Modal
-        AnimatedVisibility(
-            visible = isPlayerExpanded,
-            enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
-            exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
-        ) {
-            FullScreenPlayer(
-                state = playerState,
-                playerManager = playerManager,
-                onDismiss = { isPlayerExpanded = false }
-            )
-        }
-
-        // Global Queue Sheet
-        if (showQueueSheet) {
-            SurahQueueSheet(
-                state = playerState,
-                playerManager = playerManager,
-                onDismiss = { showQueueSheet = false }
-            )
+            // Global Queue Sheet
+            if (showQueueSheet) {
+                SurahQueueSheet(
+                    state = playerState,
+                    playerManager = playerManager,
+                    onDismiss = { showQueueSheet = false }
+                )
+            }
         }
     }
 }

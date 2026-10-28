@@ -44,12 +44,21 @@ import com.example.player.PlayerUiState
 import com.example.ui.theme.AppCustomTheme
 import com.example.ui.theme.ThemeManager
 
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
+import com.example.data.localization.AppLanguage
+import com.example.data.localization.LanguageManager
+import com.example.data.localization.LocalizedStrings
+
 @Composable
 fun SettingsScreen(
     playerState: PlayerUiState,
     playerManager: AudioPlayerManager,
+    language: AppLanguage = AppLanguage.BENGALI,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
     val currentTheme by ThemeManager.currentTheme.collectAsState()
 
     Column(
@@ -61,8 +70,8 @@ fun SettingsScreen(
     ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("Settings & Customization", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-        Text("অডিও প্লেব্যাক এবং থিম পছন্দসমূহ", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+        Text(LocalizedStrings.settingsHeader(language), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Text(LocalizedStrings.settingsSubHeader(language), color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -70,9 +79,78 @@ fun SettingsScreen(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = 120.dp)
         ) {
+            // Language Selection Section
+            item {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Language,
+                        contentDescription = null,
+                        tint = Color(0xFF10B981),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = LocalizedStrings.languageTitle(language),
+                        color = Color.White.copy(alpha = 0.9f),
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = LocalizedStrings.languageSubtitle(language),
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 12.sp
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    AppLanguage.entries.forEach { lang ->
+                        val isSelected = lang == language
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(if (isSelected) Color(0x3310B981) else Color(0x1AFFFFFF))
+                                .border(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = if (isSelected) Color(0xFF10B981) else Color.White.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(14.dp)
+                                )
+                                .clickable {
+                                    LanguageManager.setLanguage(context, lang)
+                                }
+                                .padding(vertical = 12.dp, horizontal = 8.dp)
+                                .testTag("settings_lang_${lang.code}"),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(lang.flag, fontSize = 22.sp)
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = lang.nativeName,
+                                    color = Color.White,
+                                    fontSize = 13.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                )
+                                if (isSelected) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                    Text("✓", color = Color(0xFF10B981), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+            }
+
             // Background Audio info
             item {
-                Text("Playback & Background Audio", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                Text(LocalizedStrings.backgroundAudioTitle(language), color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Box(
@@ -103,10 +181,10 @@ fun SettingsScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Background Audio & Controls", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                            Text(LocalizedStrings.backgroundAudioTitle(language), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                             Spacer(modifier = Modifier.height(3.dp))
                             Text(
-                                "অ্যাপ মিনিমাইজ বা স্ক্রিন বন্ধ করলেও ব্যাকগ্রাউন্ডে অবিরাম তিলাওয়াত চলবে এবং নোটিফিকেশন বার থেকে সহজে নিয়ন্ত্রণ করা যাবে।",
+                                LocalizedStrings.backgroundAudioDesc(language),
                                 color = Color.White.copy(alpha = 0.65f),
                                 fontSize = 11.sp,
                                 lineHeight = 15.sp
@@ -137,8 +215,8 @@ fun SettingsScreen(
                             Icon(Icons.Default.RestartAlt, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(10.dp))
                             Column {
-                                Text("Reset Queue Sequence (১-১১৪ ক্রম)", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                                Text("প্লেলিস্টের ক্রমকে মূল সূরা ক্রম অনুসারে সাজাও", color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
+                                Text(LocalizedStrings.resetQueueTitle(language), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                                Text(LocalizedStrings.resetQueueDesc(language), color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
                             }
                         }
                     }
@@ -151,7 +229,7 @@ fun SettingsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(Icons.Default.Palette, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Visual Glass Themes (গ্লাস থিম)", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(LocalizedStrings.visualThemesTitle(language), color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
                 Spacer(modifier = Modifier.height(8.dp))
             }

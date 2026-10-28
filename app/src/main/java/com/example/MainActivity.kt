@@ -29,6 +29,7 @@ class MainActivity : ComponentActivity() {
         val quranDao = database.quranDao()
         repository = QuranRepository(quranDao, applicationContext)
         playerManager = AudioPlayerManager.getInstance(this)
+        com.example.data.localization.LanguageManager.initialize(this)
 
         setContent {
             // Request Notification Permission on Android 13+ for media playback controls

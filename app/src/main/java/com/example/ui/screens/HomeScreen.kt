@@ -65,6 +65,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.data.localization.AppLanguage
+import com.example.data.localization.LocalizedStrings
 import com.example.data.model.QuranData
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
@@ -80,6 +82,7 @@ fun HomeScreen(
     playerManager: AudioPlayerManager,
     repository: QuranRepository,
     onOpenQueue: () -> Unit,
+    language: AppLanguage = AppLanguage.BENGALI,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -115,13 +118,13 @@ fun HomeScreen(
         ) {
             Column {
                 Text(
-                    text = "Easy Quranify",
+                    text = LocalizedStrings.appName(language),
                     color = Color.White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "পবিত্র কুরআন তিলাওয়াত ও শান্তিময় পরিবেশ",
+                    text = LocalizedStrings.appSlogan(language),
                     color = Color.White.copy(alpha = 0.65f),
                     fontSize = 12.sp
                 )
@@ -154,19 +157,19 @@ fun HomeScreen(
         ) {
             Column {
                 Text(
-                    text = "Featured Qaris (প্রখ্যাত ক্বারীগণ)",
+                    text = LocalizedStrings.featuredQaris(language),
                     color = Color.White,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "সোয়াইপ করে পছন্দের ক্বারীর তিলাওয়াত শুনুন",
+                    text = LocalizedStrings.swipeQarisTip(language),
                     color = Color.White.copy(alpha = 0.6f),
                     fontSize = 11.sp
                 )
             }
             Text(
-                text = "${ReciterData.reciters.size} Reciters",
+                text = LocalizedStrings.recitersCount(ReciterData.reciters.size, language),
                 color = Color(0xFF10B981),
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold
@@ -306,7 +309,7 @@ fun HomeScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search Surah by name or number...", color = Color.White.copy(alpha = 0.45f), fontSize = 13.sp) },
+            placeholder = { Text(LocalizedStrings.searchSurah(language), color = Color.White.copy(alpha = 0.45f), fontSize = 13.sp) },
             leadingIcon = {
                 Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.5f))
             },
@@ -394,7 +397,7 @@ fun HomeScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                             Text(
-                                text = "${surah.nameTranslation} • ${surah.versesCount} Ayahs • ${surah.revelationType}",
+                                text = "${surah.nameTranslation} • ${LocalizedStrings.getSurahSubtitle(surah, language)}",
                                 color = Color.White.copy(alpha = 0.6f),
                                 fontSize = 11.sp,
                                 maxLines = 1

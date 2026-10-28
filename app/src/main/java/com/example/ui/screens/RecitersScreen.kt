@@ -47,6 +47,8 @@ import androidx.compose.ui.unit.sp
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
 import com.example.player.AudioPlayerManager
+import com.example.data.localization.AppLanguage
+import com.example.data.localization.LocalizedStrings
 import com.example.player.PlayerUiState
 import com.example.ui.components.ReciterAvatar
 
@@ -54,6 +56,7 @@ import com.example.ui.components.ReciterAvatar
 fun RecitersScreen(
     playerState: PlayerUiState,
     playerManager: AudioPlayerManager,
+    language: AppLanguage = AppLanguage.BENGALI,
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
@@ -81,13 +84,13 @@ fun RecitersScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Featured Qaris (প্রখ্যাত ক্বারীগণ)",
+            text = LocalizedStrings.recitersHeader(language),
             color = Color.White,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold
         )
         Text(
-            text = "বিশ্ববিখ্যাত ১০ জন ক্বারীর সুললিত কণ্ঠ",
+            text = LocalizedStrings.recitersSubHeader(language),
             color = Color.White.copy(alpha = 0.65f),
             fontSize = 12.sp
         )
@@ -97,7 +100,7 @@ fun RecitersScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search reciter by name...", color = Color.White.copy(alpha = 0.45f), fontSize = 13.sp) },
+            placeholder = { Text(LocalizedStrings.searchReciter(language), color = Color.White.copy(alpha = 0.45f), fontSize = 13.sp) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.5f)) },
             modifier = Modifier.fillMaxWidth().testTag("reciters_search_input"),
             singleLine = true,

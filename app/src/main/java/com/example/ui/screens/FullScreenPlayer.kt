@@ -77,6 +77,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.model.AmbientSoundData
+import com.example.data.localization.AppLanguage
+import com.example.data.localization.LocalizedStrings
 import com.example.data.model.Reciter
 import com.example.data.model.ReciterData
 import com.example.player.AudioPlayerManager
@@ -92,6 +94,7 @@ fun FullScreenPlayer(
     state: PlayerUiState,
     playerManager: AudioPlayerManager,
     onDismiss: () -> Unit,
+    language: AppLanguage = AppLanguage.BENGALI,
     onReciterProfileClick: (Reciter) -> Unit = {}
 ) {
     var showQueueSheet by remember { mutableStateOf(false) }
@@ -160,7 +163,7 @@ fun FullScreenPlayer(
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "PLAYING SURAH",
+                        text = LocalizedStrings.playingSurahHeader(language),
                         color = Color.White.copy(alpha = 0.6f),
                         fontSize = 11.sp,
                         letterSpacing = 2.sp,
@@ -278,7 +281,7 @@ fun FullScreenPlayer(
                             modifier = Modifier.size(10.dp)
                         )
                         Spacer(modifier = Modifier.width(3.dp))
-                        Text("HD Qari", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text(LocalizedStrings.hdQariBadge(language), color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }

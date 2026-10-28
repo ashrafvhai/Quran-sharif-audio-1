@@ -31,6 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+import com.example.data.localization.AppLanguage
+import com.example.data.localization.LocalizedStrings
+
 enum class AppTab(val title: String) {
     HOME("Home"),
     RECITERS("Reciters"),
@@ -42,6 +45,7 @@ enum class AppTab(val title: String) {
 fun BottomNavBar(
     selectedTab: AppTab,
     onTabSelected: (AppTab) -> Unit,
+    language: AppLanguage = AppLanguage.BENGALI,
     modifier: Modifier = Modifier
 ) {
     Box(
@@ -57,10 +61,10 @@ fun BottomNavBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             val tabs = listOf(
-                Triple(AppTab.HOME, "Home", Icons.Default.Home),
-                Triple(AppTab.RECITERS, "Reciters", Icons.Default.Person),
-                Triple(AppTab.PLAYLISTS, "Playlists", Icons.AutoMirrored.Filled.QueueMusic),
-                Triple(AppTab.SETTINGS, "Settings", Icons.Default.Settings)
+                Triple(AppTab.HOME, LocalizedStrings.tabHome(language), Icons.Default.Home),
+                Triple(AppTab.RECITERS, LocalizedStrings.tabReciters(language), Icons.Default.Person),
+                Triple(AppTab.PLAYLISTS, LocalizedStrings.tabPlaylists(language), Icons.AutoMirrored.Filled.QueueMusic),
+                Triple(AppTab.SETTINGS, LocalizedStrings.tabSettings(language), Icons.Default.Settings)
             )
 
             tabs.forEach { (tab, label, icon) ->

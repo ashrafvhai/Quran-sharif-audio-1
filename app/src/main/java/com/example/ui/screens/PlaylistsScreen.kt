@@ -58,12 +58,16 @@ import com.example.player.AudioPlayerManager
 import com.example.player.PlayerUiState
 import kotlinx.coroutines.launch
 
+import com.example.data.localization.AppLanguage
+import com.example.data.localization.LocalizedStrings
+
 @Composable
 fun PlaylistsScreen(
     playerState: PlayerUiState,
     playerManager: AudioPlayerManager,
     repository: QuranRepository,
     onOpenQueue: () -> Unit,
+    language: AppLanguage = AppLanguage.BENGALI,
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -88,8 +92,16 @@ fun PlaylistsScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("Playlists & Queue", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text("আপনার পছন্দের সুরার তালিকা ও প্লে ক্রম", color = Color.White.copy(alpha = 0.65f), fontSize = 12.sp)
+                Text(LocalizedStrings.playlistsHeader(language), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(
+                    text = when (language) {
+                        AppLanguage.ENGLISH -> "Your favorite Surahs & custom queue"
+                        AppLanguage.BENGALI -> "আপনার পছন্দের সুরার তালিকা ও প্লে ক্রম"
+                        AppLanguage.ARABIC -> "سورك المفضلة وترتيب التشغيل الخاص بك"
+                    },
+                    color = Color.White.copy(alpha = 0.65f),
+                    fontSize = 12.sp
+                )
             }
 
             IconButton(
